@@ -1850,6 +1850,17 @@ export function ModelsConfig({ onClose, embedded = false, cwd = null }: {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [savedOk, setSavedOk] = useState(false);
   const [selection, setSelection] = useState<Selection | null>(readRememberedSelection);
+  // A custom provider's model list starts folded; clicking the provider opens
+  // it, and a selected model keeps its provider open.
+  const [expandedProviders, setExpandedProviders] = useState<Record<string, boolean>>({});
+  const isProviderExpanded = (name: string): boolean => Object.hasOwn(expandedProviders, name)
+    ? expandedProviders[name] === true
+    : selection?.type === "model" && selection.providerName === name;
+  const toggleProviderExpanded = (name: string): void => {
+    setExpandedProviders((prev) => ({ ...prev, [name]: !(Object.hasOwn(prev, name)
+      ? prev[name] === true
+      : selection?.type === "model" && selection.providerName === name) }));
+  };
   const [oauthProviders, setOauthProviders] = useState<OAuthProvider[]>([]);
   const [apiKeyProviders, setApiKeyProviders] = useState<ApiKeyProvider[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -1930,6 +1941,16 @@ export function ModelsConfig({ onClose, embedded = false, cwd = null }: {
     if (!next) return null;
     setConfig(next);
     setProviderNameDraft(null);
+    setExpandedProviders((prev) => {
+      if (!Object.hasOwn(prev, oldName)) return prev;
+      const moved = { ...prev };
+      if (Object.hasOwn(prev, newName)) delete moved[oldName];
+      else {
+        moved[newName] = prev[oldName];
+        delete moved[oldName];
+      }
+      return moved;
+    });
     setSelection((prev) => {
       if (!prev) return prev;
       if (prev.type === "provider" && prev.name === oldName) return { type: "provider", name: newName };
@@ -1947,6 +1968,12 @@ export function ModelsConfig({ onClose, embedded = false, cwd = null }: {
   const deleteProvider = useCallback((name: string) => {
     savedModelIdsRef.current.delete(name);
     setProviderNameDraft((prev) => prev?.provider === name ? null : prev);
+    setExpandedProviders((prev) => {
+      if (!Object.hasOwn(prev, name)) return prev;
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
     setConfig((prev) => {
       const providers = { ...(prev.providers ?? {}) };
       delete providers[name];
@@ -1961,6 +1988,7 @@ export function ModelsConfig({ onClose, embedded = false, cwd = null }: {
 
   const addModel = useCallback((providerName: string) => {
     trackAddedModels(savedModelIdsRef.current, providerName, 1);
+    setExpandedProviders((prev) => ({ ...prev, [providerName]: true }));
     setConfig((prev) => {
       const provider = prev.providers?.[providerName] ?? {};
       const models = [...(provider.models ?? []), { id: "" }];
@@ -1974,6 +2002,7 @@ export function ModelsConfig({ onClose, embedded = false, cwd = null }: {
   }, []);
 
   const addDiscoveredModels = useCallback((providerName: string, discovered: DiscoveredModel[]) => {
+    setExpandedProviders((prev) => ({ ...prev, [providerName]: true }));
     setConfig((prev) => {
       const known = new Set((prev.providers?.[providerName]?.models ?? []).map((model) => model.id));
       trackAddedModels(
@@ -2170,13 +2199,19 @@ export function ModelsConfig({ onClose, embedded = false, cwd = null }: {
               ) : providers.map(([pName, pData]) => {
                 const isProviderSelected = selection?.type === "provider" && selection.name === pName;
                 const models = pData.models ?? [];
+                const expanded = isProviderExpanded(pName);
                 return (
                   <div key={pName} style={{ marginBottom: 2 }}>
-                    {/* Provider row */}
+                    {/* Provider row: a click selects it and opens or folds its
+                        model list. */}
                     <ConfigSidebarItem
-                      onClick={() => setSelection({ type: "provider", name: pName })}
+                      onClick={() => { setSelection({ type: "provider", name: pName }); toggleProviderExpanded(pName); }}
                       active={isProviderSelected}
+                      aria-expanded={expanded}
                     >
+                      <svg className={`models-sidebar-chevron${expanded ? " is-open" : ""}`} width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: "var(--text-dim)", flexShrink: 0 }}>
+                        <polyline points="3 2 7 5 3 8" />
+                      </svg>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--text-dim)", flexShrink: 0 }}>
                         <rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" />
                         <line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" />
@@ -2190,8 +2225,8 @@ export function ModelsConfig({ onClose, embedded = false, cwd = null }: {
                       {scopeBadge(pName)}
                     </ConfigSidebarItem>
 
-                    {/* Model rows */}
-                    {models.map((m, i) => {
+                    {/* Model rows, while the provider is open. */}
+                    {expanded && models.map((m, i) => {
                       const isModelSelected = selection?.type === "model" && selection.providerName === pName && selection.index === i;
                       return (
                         <ConfigSidebarItem
@@ -2210,13 +2245,15 @@ export function ModelsConfig({ onClose, embedded = false, cwd = null }: {
                       );
                     })}
 
-                    {/* Add model button */}
-                    <ConfigSidebarItem
-                      className="models-sidebar-indented-item models-sidebar-add-item"
-                      onClick={(e) => { e.stopPropagation(); addModel(pName); }}
-                    >
-                       <ConfigSidebarText>+ {t("i18n.model")}</ConfigSidebarText>
-                    </ConfigSidebarItem>
+                    {/* Add model button, while the provider is open. */}
+                    {expanded && (
+                      <ConfigSidebarItem
+                        className="models-sidebar-indented-item models-sidebar-add-item"
+                        onClick={(e) => { e.stopPropagation(); addModel(pName); }}
+                      >
+                         <ConfigSidebarText>+ {t("i18n.model")}</ConfigSidebarText>
+                      </ConfigSidebarItem>
+                    )}
                   </div>
                 );
               })}

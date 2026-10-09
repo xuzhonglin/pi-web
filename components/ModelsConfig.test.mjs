@@ -30,6 +30,28 @@ test("uses shared sidebar sizing for providers and matching indented model rows"
   assert.match(cssSource, /\.models-sidebar-indented-item \{[\s\S]*?padding-left: 26px/);
 });
 
+test("custom providers fold their model lists; a click opens one for editing", () => {
+  const sidebar = source.slice(source.indexOf("<ConfigSidebar>"), source.indexOf("</ConfigSidebar>"));
+  // Folded by default; the provider row's click opens or folds it.
+  assert.match(source, /const \[expandedProviders, setExpandedProviders\] = useState<Record<string, boolean>>\(\{\}\);/);
+  assert.match(source, /const isProviderExpanded = \(name: string\): boolean => Object\.hasOwn\(expandedProviders, name\)[\s\S]*?: selection\?\.type === "model" && selection\.providerName === name;/);
+  assert.match(sidebar, /const expanded = isProviderExpanded\(pName\);/);
+  assert.match(sidebar, /onClick=\{\(\) => \{ setSelection\(\{ type: "provider", name: pName \}\); toggleProviderExpanded\(pName\); \}\}/);
+  assert.match(sidebar, /aria-expanded=\{expanded\}/);
+  assert.match(sidebar, /className=\{`models-sidebar-chevron\$\{expanded \? " is-open" : ""\}`\}/);
+  // The model rows and the add button show only while open; a model still
+  // selects for editing on the right.
+  assert.match(sidebar, /\{expanded && models\.map\(\(m, i\) => \{/);
+  assert.match(sidebar, /\{expanded && \(\s*<ConfigSidebarItem\s+className="models-sidebar-indented-item models-sidebar-add-item"/);
+  assert.match(sidebar, /onClick=\{\(\) => setSelection\(\{ type: "model", providerName: pName, index: i \}\)\}/);
+  // Adding (or discovering) a model opens its provider, and a rename moves
+  // the flag with the provider.
+  assert.match(source, /setExpandedProviders\(\(prev\) => \(\{ \.\.\.prev, \[providerName\]: true \}\)\);/);
+  assert.match(source, /moved\[newName\] = prev\[oldName\];\s*delete moved\[oldName\];/);
+  assert.match(source, /const next = \{ \.\.\.prev \};\s*delete next\[name\];\s*return next;/);
+  assert.match(cssSource, /\.models-sidebar-chevron\.is-open \{\s*transform: rotate\(90deg\);\s*\}/);
+});
+
 test("ignores malformed auth provider responses", () => {
   assert.match(
     source,

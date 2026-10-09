@@ -552,26 +552,21 @@ const SessionRowView = memo(function SessionRowView({
   const details = root.detailsPending ? "…" : t("sidebar.messagesCount", { count: root.messageCount });
   const tooltip = `${title}\n${details} · ${formatRelativeTime(root.modified, locale, nowDate)}${branch ? ` · ⑂ ${branch}` : ""}`;
 
-  // The right column says the one thing worth knowing: running, else unread,
-  // else when (a pinned row names its project instead, an archived row says
-  // when it was archived). Nothing sits before the title, so it gets the room.
-  let meta: ReactNode;
-  let metaState = "";
-  let metaTitle: string | undefined;
-  if (status.running) {
-    meta = <SpinnerIcon size={12} label={t("sidebar.agentRunning")} />;
-    metaState = " is-running";
-    metaTitle = t("sidebar.agentRunning");
-  } else if (status.unread) {
-    meta = <span className="session-tree-unread" role="img" aria-label={t("sidebar.newSessionActivity")} />;
-    metaState = " is-unread";
-    metaTitle = t("sidebar.newActivity");
-  } else if (context === "pinned") {
-    meta = <span className="session-tree-project">{row.project.name}</span>;
+  // The second line of the classic two-line card: the running spinner, else
+  // the unread dot, taking the time's place, then the message count and the
+  // worktree branch.
+  let statusMark: ReactNode = null;
+  if (status.running) statusMark = <SpinnerIcon size={12} label={t("sidebar.agentRunning")} />;
+  else if (status.unread) statusMark = <span className="session-tree-unread" role="img" aria-label={t("sidebar.newSessionActivity")} />;
+  // Without a marker, the line says when: a pinned row names its project
+  // instead, an archived row says when it was archived.
+  let when: ReactNode;
+  if (context === "pinned") {
+    when = <span className="session-tree-project">{row.project.name}</span>;
   } else if (context === "archive" && row.archivedAt !== null) {
-    meta = formatShortRelativeTime(new Date(row.archivedAt), locale, nowDate);
+    when = formatShortRelativeTime(new Date(row.archivedAt), locale, nowDate);
   } else {
-    meta = formatShortRelativeTime(family.latestModified, locale, nowDate);
+    when = formatShortRelativeTime(family.latestModified, locale, nowDate);
   }
 
   // Archive (or restore) one click away: desktop only, never for a running
@@ -595,8 +590,11 @@ const SessionRowView = memo(function SessionRowView({
         ) : (
           <span className="session-tree-title">{title}</span>
         )}
-        {branch && <span className="session-tree-branch">⑂ {branch}</span>}
-        <span className={`session-tree-meta${metaState}`} title={metaTitle}>{meta}</span>
+        <span className="session-tree-sub">
+          {statusMark ?? <span className="session-tree-time">{when}</span>}
+          <span className="session-tree-detail">{details}</span>
+          {branch && <span className="session-tree-branch">⑂ {branch}</span>}
+        </span>
       </button>
       {!status.transient && (
         <span className="session-tree-actions">
@@ -888,6 +886,8 @@ const PlainRowView = memo(function PlainRowView({
   const style = rowStyle(top, height);
 
   switch (row.kind) {
+    case "divider":
+      return <div className="session-tree-row session-tree-divider" style={style} data-row-key={row.key} aria-hidden="true" />;
     case "pinned-header":
       return (
         <div className="session-tree-row session-tree-pinned-header" style={style} data-row-key={row.key}>

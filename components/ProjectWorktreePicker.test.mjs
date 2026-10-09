@@ -119,8 +119,11 @@ test("both menus in both places: picking what is in use changes nothing while th
   const defaults = projects.indexOf('label: t("sidebar.useDefaultDirectory"),');
   const other = projects.indexOf('label: t(classic ? "sidebar.customPath" : "sidebar.openOtherProject"),');
   assert.ok(projects.indexOf('{ type: "separator", id: "separator" }') < defaults && defaults < other);
-  // No project to list (a first run): no line above the two folder items.
-  assert.match(projects, /const separator: SidebarMenuItem\[\] = choices\.length > 0 \? \[\{ type: "separator", id: "separator" \}\] : \[\];/);
+  // The project in use's own actions (the files tab: pin, archive older,
+  // view archived) sit between the list and the two folder items.
+  assert.match(projects, /const actions = projectActions \?\? \[\];/);
+  assert.match(projects, /const separator: SidebarMenuItem\[\] = choices\.length > 0 \|\| actions\.length > 0 \? \[\{ type: "separator", id: "separator" \}\] : \[\];/);
+  assert.match(projects, /\.\.\.\(actions\.length > 0 && choices\.length > 0 \? \[\{ type: "separator", id: "separator-actions" \} as const\] : \[\]\),\s*\.\.\.actions,/);
   assert.match(projects, /onSelect: \(\) => onUseDefaultDirectory\(\),/);
   assert.match(projects, /onSelect: \(\) => onOpenFolder\(menu\?\.opener \?\? null\),/);
 

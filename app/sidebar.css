@@ -30,10 +30,10 @@
 }
 
 .session-tree-scroll {
-  /* Rows sit 6px in from both visible edges. A classic scrollbar takes its
-     width from the right only (--session-tree-scrollbar, measured in
-     SessionTree), so the left inset grows by that width and the right one
-     shrinks by it: the margins stay equal on both sides. */
+  /* Group, pinned and archive rows keep a small inset from the edges. A
+     classic scrollbar takes width on the right only, so the left inset grows
+     by that width and the right one shrinks by it. The session cards span the
+     full width instead, so a selected card reaches both edges. */
   --session-tree-inset-left: max(6px, var(--session-tree-scrollbar, 0px));
   --session-tree-inset-right: max(0px, calc(6px - var(--session-tree-scrollbar, 0px)));
   position: relative;
@@ -41,20 +41,8 @@
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  /* The scrollbar's room is kept while the list fits too, so rows do not
-     narrow when it starts to scroll. An overlay scrollbar reserves nothing. */
-  scrollbar-gutter: stable;
   padding-bottom: 6px;
   box-sizing: border-box;
-}
-
-/* Safari before 18.2 has no scrollbar-gutter: an always-present scrollbar
-   keeps the same room. Its track is transparent, and a subtle thumb shows only
-   while the list is active and overflows. */
-@supports not (scrollbar-gutter: stable) {
-  .session-tree-scroll {
-    overflow-y: scroll;
-  }
 }
 
 .session-tree-inner {
@@ -151,15 +139,28 @@
   background: #0891b2;
 }
 
-/* Session row: status slot, title, branch, time; actions take the time's place
-   on hover. Hover and selection are a rounded box inset from the sidebar's
-   edges, never a full-width band. */
+/* A line between the pinned section and the project's own sessions. */
+.session-tree-divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  left: 10px;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Session row: the classic two-line card. Line one is the title; line two
+   the time (or the running/unread marker), the message count and the worktree
+   branch. Rows run the full width, a left accent bar marks the selection, and
+   the actions take a column at the right on hover. */
 .session-tree-session {
-  right: var(--session-tree-inset-right);
-  left: var(--session-tree-inset-left);
+  right: 0;
+  left: 0;
   gap: 2px;
-  padding: 0 4px 0 16px;
-  border-radius: 7px;
+  padding: 0 6px 0 14px;
+  border-left: 2px solid transparent;
+  border-radius: 0;
   cursor: pointer;
   overflow: hidden;
 }
@@ -170,12 +171,14 @@
 
 .session-tree-session.is-selected {
   background: var(--bg-selected);
+  border-left-color: var(--accent);
 }
 
 .session-tree-session.is-confirming {
   gap: 5px;
   background: rgba(239, 68, 68, 0.06);
   box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.35);
+  border-left-color: #ef4444;
   cursor: default;
 }
 
@@ -186,8 +189,10 @@
 .session-tree-main {
   display: flex;
   flex: 1;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1px;
   min-width: 0;
   height: 100%;
   padding: 0;
@@ -220,24 +225,25 @@
   }
 }
 
-/* Titles sit a step softer than the text color; the selected one takes the
-   full text color instead of a heavier weight. */
+/* The title takes the full text color; the second line is one step dimmer,
+   so the two lines read as primary and secondary. */
 .session-tree-title {
-  flex: 1 1 auto;
+  display: block;
   min-width: 0;
   overflow: hidden;
-  color: color-mix(in srgb, var(--text) 75%, var(--bg-panel));
+  color: var(--text);
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.session-tree-session.is-selected .session-tree-title {
-  color: var(--text);
-}
-
 .session-tree-session.is-archived .session-tree-title {
   color: var(--text-muted);
+}
+
+/* The selected row's title is heavier, as the classic item made it. */
+.session-tree-session.is-selected .session-tree-title {
+  font-weight: 500;
 }
 
 /* A Fork's copy: the ellipsis cuts its title before the suffix that tells it
@@ -257,6 +263,24 @@
   white-space: pre;
 }
 
+/* The second line: the marker or the time, then the message count and branch. */
+.session-tree-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.session-tree-time,
+.session-tree-detail {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
 .session-tree-branch {
   flex: none;
   max-width: 78px;
@@ -265,20 +289,6 @@
   font-family: var(--font-mono);
   font-size: 10px;
   text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* The right column: the time, or the running spinner / unread dot in its place. */
-.session-tree-meta {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: flex-end;
-  min-width: 26px;
-  color: var(--text-dim);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
   white-space: nowrap;
 }
 
@@ -329,35 +339,14 @@
   display: flex;
 }
 
-.session-tree-meta.is-running {
-  color: var(--accent);
-}
-
-.session-tree-session:hover .session-tree-meta {
-  display: none;
-}
-
-/* A running row has no archive button: its spinner stays beside ⋯. */
-.session-tree-session.is-running:hover .session-tree-meta {
-  display: flex;
-}
-
 /*
  * Keyboard focus shows them too. Only :focus-visible: Chrome focuses a
  * clicked button, and :focus-within would keep a clicked row's actions up
- * (and its time hidden) after the pointer leaves. Each :has() rule stands
- * alone so a browser without :has() drops only that rule; it gets the
- * :focus-within fallback in the @supports block after the group rules.
+ * after the pointer leaves. Each :has() rule stands alone so a browser
+ * without :has() drops only that rule; it gets the :focus-within fallback in
+ * the @supports block after the group rules.
  */
 .session-tree-session:has(:focus-visible) .session-tree-action {
-  display: flex;
-}
-
-.session-tree-session:has(:focus-visible) .session-tree-meta {
-  display: none;
-}
-
-.session-tree-session.is-running:has(:focus-visible) .session-tree-meta {
   display: flex;
 }
 
@@ -606,14 +595,8 @@
     display: flex;
   }
 
-  .session-tree-session:focus-within .session-tree-meta,
   .session-tree-group:focus-within .session-tree-summary {
     display: none;
-  }
-
-  .session-tree.is-mobile .session-tree-session:focus-within .session-tree-meta,
-  .session-tree-session.is-running:focus-within .session-tree-meta {
-    display: flex;
   }
 
   .session-tree.is-mobile .session-tree-group:focus-within .session-tree-summary {
@@ -642,7 +625,7 @@
 /* Lined up with the session titles. */
 .session-tree-group-empty,
 .session-tree-more {
-  padding-left: calc(var(--session-tree-inset-left) + 16px);
+  padding-left: 16px;
   color: var(--text-dim);
   font-size: 11px;
 }
@@ -732,19 +715,11 @@
   flex: none;
 }
 
-/* Phone layout: 44px rows, ⋯ and the group buttons always shown, no archive quick button. */
+/* Phone layout: tall rows, ⋯ and the group buttons always shown, no archive quick button. */
 .session-tree.is-mobile .session-tree-more-action {
   display: flex;
   width: 32px;
   height: 32px;
-}
-
-.session-tree.is-mobile .session-tree-session:hover .session-tree-meta {
-  display: flex;
-}
-
-.session-tree.is-mobile .session-tree-session:has(:focus-visible) .session-tree-meta {
-  display: flex;
 }
 
 .session-tree.is-mobile .session-tree-group-actions {
@@ -807,98 +782,85 @@
   padding-bottom: 56px;
 }
 
-/* One toolbar row in the cells of the chat's top bar beside it (AppShell):
-   36px with its line, as that bar is, so the two read as one bar. Each cell is divided on its
-   right; the search cell's right is the sidebar's own edge. */
+/* The header block, as the classic sidebar had it: the wordmark with New and
+   the search, the folder in use, and the search field, with one line under. */
 .sidebar-header {
   display: flex;
   flex: none;
-  align-items: stretch;
-  height: 36px;
-  box-sizing: border-box;
+  flex-direction: column;
+  padding: 12px 10px 10px;
   border-bottom: 1px solid var(--border);
 }
 
-/* The tablist itself holds only the two tabs (ARIA allows nothing else in it). */
-.sidebar-tabs-list {
+.sidebar-brand-row {
   display: flex;
-  flex: none;
-  align-items: stretch;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
-/* The chat bar's cells: a 2px line on top that takes the accent when the
-   cell is the one chosen (a tab, the open search). */
-.sidebar-tab,
+.sidebar-header-actions {
+  display: flex;
+  flex: none;
+  gap: 6px;
+}
+
+/* The wordmark: a monospace button that scrambles to the versions on click. */
+.sidebar-brand {
+  min-width: 6ch;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-align: left;
+  white-space: nowrap;
+  cursor: default;
+}
+
 .sidebar-new-button,
 .sidebar-search-toggle {
   display: flex;
   flex: none;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 0 12px;
-  border: 0;
-  border-top: 2px solid transparent;
-  border-radius: 0;
-  background: transparent;
+  gap: 5px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-hover);
   color: var(--text-muted);
   font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-}
-
-.sidebar-tab,
-.sidebar-new-button {
-  border-right: 1px solid var(--border);
-}
-
-.sidebar-tab-icon {
-  flex: none;
-  color: var(--text-dim);
-}
-
-.sidebar-tab:hover,
-.sidebar-new-button:not(:disabled):hover,
-.sidebar-search-toggle:hover {
-  background: var(--bg-hover);
-  color: var(--text);
-}
-
-.sidebar-tab.is-selected,
-.sidebar-search-toggle.is-active {
-  border-top-color: var(--accent);
-  background: var(--bg-selected);
-  color: var(--text);
-}
-
-.sidebar-tab.is-selected {
-  font-weight: 500;
-}
-
-.sidebar-tab.is-selected .sidebar-tab-icon {
-  color: var(--accent);
-}
-
-.sidebar-tab-count {
-  color: var(--text-dim);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-  font-weight: 400;
-}
-
-.sidebar-header-spacer {
-  flex: 1;
-  min-width: 0;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
 .sidebar-new-button {
-  font-weight: 500;
+  padding: 0 12px 0 10px;
 }
 
 .sidebar-search-toggle {
-  width: 36px;
+  width: 32px;
   padding: 0;
+}
+
+.sidebar-new-button:not(:disabled):hover,
+.sidebar-search-toggle:hover {
+  background: var(--bg-selected);
+  color: var(--accent);
+}
+
+.sidebar-search-toggle.is-active {
+  background: var(--bg-selected);
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .sidebar-new-button:disabled {
@@ -906,22 +868,15 @@
   cursor: not-allowed;
 }
 
-/* Where the labels do not fit (useHeaderFit measures them: their widths
-   change with the language): New keeps its + (data-fit 1), then the tabs
-   their icons (2). A hidden label is still each one's name. */
+/* Where the labels do not fit (useHeaderFit measures them): New keeps its +. */
 .sidebar-header[data-fit="1"] .sidebar-new-button,
 .sidebar-header[data-fit="2"] .sidebar-new-button {
-  width: 36px;
+  width: 32px;
   padding: 0;
 }
 
-.sidebar-header[data-fit="2"] .sidebar-tab {
-  padding: 0 11px;
-}
-
 .sidebar-header[data-fit="1"] .sidebar-new-label,
-.sidebar-header[data-fit="2"] .sidebar-new-label,
-.sidebar-header[data-fit="2"] .sidebar-tab-label {
+.sidebar-header[data-fit="2"] .sidebar-new-label {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -932,7 +887,6 @@
 
 .sidebar-new-button:focus-visible,
 .sidebar-search-toggle:focus-visible,
-.sidebar-tab:focus-visible,
 .sidebar-archive-back:focus-visible,
 .sidebar-tool-button:focus-visible {
   outline: 2px solid var(--accent);
@@ -948,9 +902,144 @@
   overflow: hidden;
 }
 
-.sidebar-search {
+/* The folder in use, inside the header block. */
+.sidebar-project-bar {
+  display: flex;
   flex: none;
-  padding: 8px 8px 4px;
+  flex-direction: column;
+}
+
+/* The session list and the explorer share the sidebar's height, as the
+   classic split did; the sessions take the remaining room while the explorer
+   is folded. */
+.sidebar-sessions-panel {
+  flex: 1 1 0;
+}
+
+.sidebar-explorer {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 120px;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-explorer.is-collapsed {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+/* The draggable boundary between the session list and the explorer, as the
+   classic sidebar had it (hooks/useResizablePanel.ts). */
+.sidebar-section-resize-handle {
+  position: relative;
+  z-index: 20;
+  flex: 0 0 12px;
+  width: 100%;
+  height: 12px;
+  margin: -6px 0;
+  cursor: row-resize;
+  touch-action: none;
+}
+
+.sidebar-section-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--border);
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.sidebar-section-resize-handle:hover::after,
+.sidebar-section-resize-handle.is-resizing::after {
+  background: var(--accent);
+  opacity: 1;
+}
+
+.sidebar-explorer-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 6px 0 8px;
+}
+
+.sidebar-explorer-toggle {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.sidebar-explorer-toggle:hover {
+  color: var(--text);
+}
+
+.sidebar-explorer-chevron {
+  flex: none;
+  transition: transform 0.15s;
+}
+
+.sidebar-explorer-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.sidebar-explorer-label {
+  white-space: nowrap;
+}
+
+/* The archive entry: a bar at the sidebar's own bottom, its label lined up
+   with the session titles (the card's 2px border + 14px padding). */
+.sidebar-archived-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-archived-button {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 32px;
+  padding: 0 10px 0 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-archived-button:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.sidebar-archived-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-search-input {
@@ -958,6 +1047,7 @@
   width: 100%;
   min-width: 0;
   height: 29px;
+  margin-top: 6px;
   padding: 0 10px;
   box-sizing: border-box;
   border: 1px solid var(--border);
@@ -1038,37 +1128,28 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* The head's last row: the actions on that folder and the tree's two
-   views, used often enough to stay in view (its search is the toolbar
-   row's). The folder's four from the left, the tree's views (ignored files,
-   changes) at the right end, the row's edges on the boxes'. Always the same
-   six (the changes view is disabled, not gone, without changes), so nothing
-   moves as the count flips. At the sidebar's 180px minimum they give way
-   together, down to 21px wide, and the gap before the views closes. */
+/* The head's row: the folder's actions and the file search, then the tree's
+   two views (ignored files, changes) at the right end. Always the same
+   buttons (the changes view is disabled, not gone, without changes), so
+   nothing moves as the count flips. */
 .sidebar-files-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-/* The first of the tree's views. A wrapper around the two would be sized
-   by their icons, not their 32px basis, and squeeze them at any width. */
-.sidebar-files-views-start {
+  gap: 2px;
   margin-left: auto;
 }
 
 /* Square keys, borderless and dim: their box shows on hover. */
 .sidebar-tool-button {
   display: flex;
-  flex: 0 1 32px;
+  flex: 0 1 26px;
   align-items: center;
   justify-content: center;
-  min-width: 21px;
-  height: 32px;
+  min-width: 20px;
+  height: 26px;
   padding: 0;
   border: 0;
-  border-radius: 7px;
+  border-radius: 6px;
   background: transparent;
   color: var(--text-dim);
   cursor: pointer;

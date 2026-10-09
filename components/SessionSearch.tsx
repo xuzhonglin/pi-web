@@ -6,7 +6,7 @@ import { formatRelativeTime } from "@/lib/i18n/format";
 import type { SessionInfo } from "@/lib/types";
 import type { SessionSearchResponse } from "@/lib/session-search";
 
-export function SessionSearch({ open, query, children, selectedSessionId, onSelectSession, archivedSessionIds }: {
+export function SessionSearch({ open, query, children, selectedSessionId, onSelectSession, archivedSessionIds, projectKey }: {
   open: boolean;
   query: string;
   children: ReactNode;
@@ -14,6 +14,8 @@ export function SessionSearch({ open, query, children, selectedSessionId, onSele
   onSelectSession: (session: SessionInfo, entryId?: string, blockIndex?: number) => void;
   /** Ids of every session in an archived family: their results are tagged, not hidden. */
   archivedSessionIds?: ReadonlySet<string>;
+  /** The sidebar's project: search is scoped to it (null = every project). */
+  projectKey?: string | null;
 }) {
   const { t, locale } = useI18n();
   const [state, setState] = useState<{ query: string; response?: SessionSearchResponse; failed?: boolean }>({ query: "" });
@@ -31,7 +33,9 @@ export function SessionSearch({ open, query, children, selectedSessionId, onSele
     setState({ query: search });
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/sessions/search?${new URLSearchParams({ q: search })}`, { signal: controller.signal });
+        const params = new URLSearchParams({ q: search });
+        if (projectKey) params.set("projectKey", projectKey);
+        const res = await fetch(`/api/sessions/search?${params}`, { signal: controller.signal });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json() as SessionSearchResponse;
         if (!controller.signal.aborted) setState({ query: search, response: data });
@@ -43,7 +47,7 @@ export function SessionSearch({ open, query, children, selectedSessionId, onSele
       clearTimeout(timer);
       controller.abort();
     };
-  }, [open, search]);
+  }, [open, search, projectKey]);
 
   return !open || !search ? children : (
     <div className="min-h-20 flex-1 overflow-y-auto" aria-busy={!response && !failed}>

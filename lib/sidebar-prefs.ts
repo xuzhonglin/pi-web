@@ -10,8 +10,9 @@ const SIDEBAR_TAB_STORAGE_KEY = "pi-web:sidebar-tab";
 const GROUP_EXPANSION_STORAGE_KEY = "pi-web:sidebar-groups";
 const PINNED_COLLAPSED_STORAGE_KEY = "pi-web:sidebar-pins-collapsed";
 const SHOW_IGNORED_FILES_STORAGE_KEY = "pi-web:sidebar-files-show-ignored";
+const EXPLORER_COLLAPSED_STORAGE_KEY = "pi-web:sidebar-explorer-collapsed";
 /** What the sessions/explorer split, which the two tabs replaced, kept: nothing reads them now. */
-const RETIRED_STORAGE_KEYS = ["pi-web:file-explorer:open", "pi-web:sidebar-session-pane-height"];
+const RETIRED_STORAGE_KEYS = ["pi-web:file-explorer:open"];
 
 /** Oldest choices are dropped beyond this many project keys. */
 const MAX_GROUP_EXPANSION_ENTRIES = 300;
@@ -130,6 +131,28 @@ export function saveShowIgnoredFiles(
   if (!storage) return;
   try {
     storage.setItem(SHOW_IGNORED_FILES_STORAGE_KEY, String(show));
+  } catch {
+    // Persistence is best-effort.
+  }
+}
+
+/** Whether the file explorer belongs to the sessions view and starts folded. */
+export function loadExplorerCollapsed(storage: StorageLike | null = getBrowserStorage()): boolean {
+  if (!storage) return false;
+  try {
+    return storage.getItem(EXPLORER_COLLAPSED_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function saveExplorerCollapsed(
+  collapsed: boolean,
+  storage: StorageLike | null = getBrowserStorage(),
+): void {
+  if (!storage) return;
+  try {
+    storage.setItem(EXPLORER_COLLAPSED_STORAGE_KEY, String(collapsed));
   } catch {
     // Persistence is best-effort.
   }

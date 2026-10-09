@@ -9,14 +9,14 @@ const jiti = createJiti(import.meta.url, {
 });
 const React = await jiti.import("react");
 const { renderToStaticMarkup } = await jiti.import("react-dom/server");
-const { I18nProvider } = await jiti.import("@/hooks/useI18n.tsx");
+const { I18nProvider } = await jiti.import("@/hooks/useI18n");
 const { SessionTree, sessionRowTitle } = await jiti.import("./SessionTree.tsx");
 const { buildSessionTree, SIDEBAR_ROW_HEIGHTS } = await jiti.import("@/lib/session-tree.ts");
 const { messages: zhCN } = (await jiti.import("@/lib/i18n/messages/zh-CN.ts")).zhCNLocale;
 const { messages: zhTW } = (await jiti.import("@/lib/i18n/messages/zh-TW.ts")).zhTWLocale;
-const source = await readFile(new URL("./SessionTree.tsx", import.meta.url), "utf8");
-const dragSource = await readFile(new URL("../hooks/useGroupDrag.ts", import.meta.url), "utf8");
-const css = await readFile(new URL("../app/sidebar.css", import.meta.url), "utf8");
+const source = (await readFile(new URL("./SessionTree.tsx", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+const dragSource = (await readFile(new URL("../hooks/useGroupDrag.ts", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+const css = (await readFile(new URL("../app/sidebar.css", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
 
 const h = React.createElement;
 const MINUTE = 60_000;
@@ -178,9 +178,9 @@ test("a group's ⋯ shows its open menu; its + starts a session at once", () => 
 test("an idle session row shows its short time, branch and both actions", () => {
   const root = session("idle", { isWorktree: true, branch: "feat/rows" });
   const html = rowMarkup(render({ rows: [sessionRow(root)] }), "session:group:idle");
-  assert.match(html, /^<div class="session-tree-row session-tree-session" style="top:0;height:32px" data-row-key="session:group:idle">/);
-  // Nothing before the title: it gets the room; the time sits at the right.
-  assert.match(html, /<button type="button" class="session-tree-main" title="[^"]*"><span class="session-tree-title">first idle<\/span><span class="session-tree-branch">⑂ feat\/rows<\/span><span class="session-tree-meta">5m<\/span>/);
+  assert.match(html, /^<div class="session-tree-row session-tree-session" style="top:0;height:54px" data-row-key="session:group:idle">/);
+  // The classic two-line card: the title, then the time, count and branch.
+  assert.match(html, /<button type="button" class="session-tree-main" title="[^"]*"><span class="session-tree-title">first idle<\/span><span class="session-tree-sub"><span class="session-tree-time">5m<\/span><span class="session-tree-detail">3 msgs<\/span><span class="session-tree-branch">⑂ feat\/rows<\/span><\/span><\/button>/);
   assert.match(html, /title="first idle\n3 msgs · 5 minutes ago · ⑂ feat\/rows"/);
   assert.match(html, /class="session-tree-action session-tree-quick-action" aria-label="Archive" title="Archive"/);
   assert.match(html, /class="session-tree-action session-tree-more-action" aria-label="More actions" title="More actions" aria-haspopup="menu" aria-expanded="false"/);
@@ -196,7 +196,7 @@ test("a branch chip needs a linked worktree", () => {
 test("a fork's row keeps its name's suffix in view; other titles stay one span", () => {
   const fork = { kind: "fork", originSessionId: "src" };
   const named = rowMarkup(render({ rows: [sessionRow(session("copy", { name: "PR#1030 状态栏命令按钮 · 3f9a", relation: fork }))] }), "session:group:copy");
-  assert.match(named, /<span class="session-tree-title has-fork-suffix"><span class="session-tree-title-base">PR#1030 状态栏命令按钮<\/span><span class="session-tree-title-suffix"> · 3f9a<\/span><\/span><span class="session-tree-meta">/);
+  assert.match(named, /<span class="session-tree-title has-fork-suffix"><span class="session-tree-title-base">PR#1030 状态栏命令按钮<\/span><span class="session-tree-title-suffix"> · 3f9a<\/span><\/span><span class="session-tree-sub">/);
   assert.match(named, /title="PR#1030 状态栏命令按钮 · 3f9a\n/, "the tooltip has the whole name");
   // Not a fork, no suffix, or no name: the title is cut as a whole.
   for (const extra of [
@@ -215,9 +215,9 @@ test("a fork's row keeps its name's suffix in view; other titles stay one span",
 
 test("a running row shows the labelled spinner and cannot be archived from the row", () => {
   const html = rowMarkup(render({ rows: [sessionRow(session("run"), { status: { running: true, unread: true } })] }), "session:group:run");
-  // The spinner takes the time's place at the right, and the row says it is running.
+  // The spinner takes the time's place on the second line, and the row says it is running.
   assert.match(html, /class="session-tree-row session-tree-session is-running"/);
-  assert.match(html, /<span class="session-tree-title">first run<\/span><span class="session-tree-meta is-running" title="Agent running…"><svg[^>]*class="sidebar-spin" role="img" aria-label="Agent running…"/);
+  assert.match(html, /<span class="session-tree-title">first run<\/span><span class="session-tree-sub"><svg[^>]*class="sidebar-spin" role="img" aria-label="Agent running…"/);
   assert.doesNotMatch(html, /session-tree-slot/);
   assert.doesNotMatch(html, /session-tree-unread/);
   assert.doesNotMatch(html, /aria-label="Archive"/);
@@ -226,7 +226,7 @@ test("a running row shows the labelled spinner and cannot be archived from the r
 
 test("an unread row shows the labelled unread dot", () => {
   const html = rowMarkup(render({ rows: [sessionRow(session("new"), { status: { unread: true } })] }), "session:group:new");
-  assert.match(html, /<span class="session-tree-meta is-unread" title="New activity"><span class="session-tree-unread" role="img" aria-label="New session activity"><\/span><\/span>/);
+  assert.match(html, /<span class="session-tree-sub"><span class="session-tree-unread" role="img" aria-label="New session activity"><\/span><span class="session-tree-detail">3 msgs<\/span>/);
 });
 
 test("the selected row is marked and its menu button reports an open menu", () => {
@@ -247,7 +247,7 @@ test("a transient row offers no actions at all", () => {
 
 test("pinned rows name their project and archived rows offer restore with the archive time", () => {
   const pinned = rowMarkup(render({ rows: [sessionRow(session("pin"), { context: "pinned" })] }), "session:pinned:pin");
-  assert.match(pinned, /<span class="session-tree-meta"><span class="session-tree-project">app<\/span><\/span>/);
+  assert.match(pinned, /<span class="session-tree-sub"><span class="session-tree-time"><span class="session-tree-project">app<\/span><\/span><span class="session-tree-detail">3 msgs<\/span><\/span>/);
   assert.match(pinned, /aria-label="Archive"/);
 
   const archived = rowMarkup(render({
@@ -255,7 +255,7 @@ test("pinned rows name their project and archived rows offer restore with the ar
   }), "session:archive:old");
   assert.match(archived, /class="session-tree-row session-tree-session is-archived"/);
   assert.doesNotMatch(archived, /session-tree-slot/);
-  assert.match(archived, /<span class="session-tree-meta">2h<\/span>/);
+  assert.match(archived, /<span class="session-tree-sub"><span class="session-tree-time">2h<\/span><span class="session-tree-detail">3 msgs<\/span>/);
   assert.match(archived, /aria-label="Restore" title="Restore"/);
   assert.doesNotMatch(archived, /aria-label="Archive"/);
 });
@@ -265,7 +265,7 @@ test("the phone layout uses tall rows, keeps ⋯ and drops the archive quick but
   assert.match(html, /^<div class="session-tree is-mobile">/);
   assert.match(rowMarkup(html, "group:/work/app"), /style="top:0;height:40px"/);
   const row = rowMarkup(html, "session:group:m");
-  assert.match(row, /style="top:40px;height:44px"/);
+  assert.match(row, /style="top:40px;height:54px"/);
   assert.match(row, /aria-label="More actions"/);
   assert.doesNotMatch(row, /aria-label="Archive"/);
 });
@@ -292,6 +292,15 @@ test("delete confirmation shows a shortened title and both answers", () => {
   assert.match(html, /<button type="button" class="session-tree-confirm-delete"><svg[^>]*><path[\s\S]*?<\/svg>Delete<\/button>/);
   assert.match(html, /<button type="button" class="session-tree-confirm-cancel">Cancel<\/button>/);
   assert.doesNotMatch(html, /More actions/);
+});
+
+test("the pinned divider parts the pinned section, and the selected title is bolder", () => {
+  const html = render({ rows: [{ kind: "divider", key: "pinned-divider" }] });
+  assert.match(html, /<div class="session-tree-row session-tree-divider" style="top:0;height:13px" data-row-key="pinned-divider" aria-hidden="true"><\/div>/);
+  assert.equal(SIDEBAR_ROW_HEIGHTS.desktop.divider, 13);
+  assert.match(cssRule(".session-tree-divider::after"), /content: "";[\s\S]*?background: var\(--border\);/);
+  // The selected row's title is heavier, as the classic item made it.
+  assert.match(cssRule(".session-tree-session.is-selected .session-tree-title"), /font-weight: 500;/);
 });
 
 test("show more, empty groups, footer links and archive groups", () => {
@@ -343,10 +352,10 @@ test("loading replaces the rows; the empty label shows only without session or g
 test("only rows near the viewport are mounted, plus the ones that must stay", () => {
   const rows = Array.from({ length: 200 }, (_, index) => sessionRow(session(`s${index}`)));
   const plain = render({ rows });
-  assert.match(plain, /<div class="session-tree-inner" style="height:6400px">/);
+  assert.match(plain, /<div class="session-tree-inner" style="height:10800px">/);
   const keys = renderedKeys(plain);
   // An unmeasured viewport counts as 600px, plus 240px of overscan below.
-  assert.equal(keys.length, Math.ceil((600 + 240) / 32));
+  assert.equal(keys.length, Math.ceil((600 + 240) / 54));
   assert.equal(keys[0], "session:group:s0");
 
   const kept = renderedKeys(render({
@@ -356,7 +365,7 @@ test("only rows near the viewport are mounted, plus the ones that must stay", ()
     confirmDeleteRootId: "s180",
   }));
   assert.deepEqual(kept.slice(-3), ["session:group:s120", "session:group:s150", "session:group:s180"]);
-  assert.match(render({ rows, renamingRootId: "s120" }), /style="top:3840px;height:32px" data-row-key="session:group:s120"/);
+  assert.match(render({ rows, renamingRootId: "s120" }), /style="top:6480px;height:54px" data-row-key="session:group:s120"/);
 });
 
 test("a reveal request keeps its row mounted until handled, once per id, and expires", () => {
@@ -407,7 +416,7 @@ test("renders the model built from a catalog with unique row keys", () => {
   const html = render({ rows: model.rows });
   const keys = renderedKeys(html);
   assert.equal(new Set(keys).size, keys.length);
-  assert.deepEqual(keys, ["pinned-header", "session:pinned:b", "group:/work/app", "session:group:a", "footer-open"]);
+  assert.deepEqual(keys, ["pinned-header", "session:pinned:b", "pinned-divider", "group:/work/app", "session:group:a", "footer-open"]);
   const familyRow = rowMarkup(html, "session:group:a");
   assert.match(familyRow, /is-selected/);
   assert.match(familyRow, /aria-label="Agent running…"/);
@@ -474,18 +483,20 @@ test("row CSS stays flat, themed and quiet", () => {
   assert.doesNotMatch(css, /@starting-style|prefers-color-scheme/);
   const colors = new Set((css.match(/#[0-9a-fA-F]{3,8}\b/g) ?? []).map((color) => color.toLowerCase()));
   for (const color of colors) assert.ok(["#ef4444", "#0891b2", "#f87171", "#fff"].includes(color), `unexpected color ${color}`);
-  // Hover and selection are a rounded box inset from the edges, not a full-width band.
+  // Rows run the full width with a left accent bar for the selection; the
+  // second line carries the time, count and branch.
   assert.match(cssRule(".session-tree-scroll"), /--session-tree-inset-left: max\(6px, var\(--session-tree-scrollbar, 0px\)\);\s*--session-tree-inset-right: max\(0px, calc\(6px - var\(--session-tree-scrollbar, 0px\)\)\);/);
-  // The scrollbar's room is kept while everything fits, so rows keep their width when it starts to scroll.
-  assert.match(cssRule(".session-tree-scroll"), /overflow-y: auto;[\s\S]*?scrollbar-gutter: stable;/);
-  assert.match(css, /@supports not \(scrollbar-gutter: stable\) \{\s*\.session-tree-scroll \{\s*overflow-y: scroll;\s*\}\s*\}/);
-  assert.match(cssRule(".session-tree-session"), /right: var\(--session-tree-inset-right\);\s*left: var\(--session-tree-inset-left\);[\s\S]*?border-radius: 7px;/);
-  assert.match(cssRule(".session-tree-session.is-running:hover .session-tree-meta"), /display: flex;/);
-  assert.match(cssRule(".session-tree-session.is-selected"), /^\s*background: var\(--bg-selected\);\s*$/);
-  // Selection deepens the title to the text color; no heavier weight.
-  assert.match(cssRule(".session-tree-title"), /color: color-mix\(in srgb, var\(--text\) 75%, var\(--bg-panel\)\);/);
-  assert.match(cssRule(".session-tree-session.is-selected .session-tree-title"), /^\s*color: var\(--text\);\s*$/);
-  assert.doesNotMatch(css, /border-left/);
+  // No reserved scrollbar gutter: a selected card reaches the right edge.
+  assert.doesNotMatch(cssRule(".session-tree-scroll"), /scrollbar-gutter/);
+  assert.doesNotMatch(css, /@supports not \(scrollbar-gutter: stable\)/);
+  assert.match(cssRule(".session-tree-session"), /right: 0;\s*left: 0;[\s\S]*?border-left: 2px solid transparent;\s*border-radius: 0;/);
+  assert.match(cssRule(".session-tree-main"), /flex-direction: column;/);
+  assert.match(cssRule(".session-tree-sub"), /display: flex;\s*align-items: center;[\s\S]*?color: var\(--text-dim\);\s*font-size: 11px;/);
+  assert.match(cssRule(".session-tree-session.is-selected"), /background: var\(--bg-selected\);\s*border-left-color: var\(--accent\);/);
+  // The title takes the full text color and the second line the dim one, as
+  // 0.10's two-line item did: primary and secondary read apart.
+  assert.match(cssRule(".session-tree-title"), /color: var\(--text\);/);
+  assert.doesNotMatch(cssRule(".session-tree-title"), /color-mix/);
   assert.match(cssRule(".session-tree-group"), /right: var\(--session-tree-inset-right\);\s*left: var\(--session-tree-inset-left\);[\s\S]*?border-radius: 7px;/);
   assert.match(cssRule(".session-tree-action"), /display: none;/);
   assert.match(cssRule(".session-tree.is-mobile .session-tree-more-action"), /display: flex;/);
@@ -493,12 +504,12 @@ test("row CSS stays flat, themed and quiet", () => {
   // Keyboard focus reveals row actions; a mouse-focused (clicked) row does not keep them up.
   assert.match(cssRule(".session-tree-session:has(:focus-visible) .session-tree-action"), /display: flex;/);
   assert.match(cssRule(".session-tree-group:has(:focus-visible) .session-tree-group-actions"), /display: flex;/);
-  const outsideFallback = css.replace(/@supports not selector\(:has\(\*\)\) \{[\s\S]*?\n\}\n/, "");
+  const outsideFallback = css.replace(/@supports not selector\(:has\(\*\)\) \{[\s\S]*?\r?\n\}\r?\n/, "");
   assert.notEqual(outsideFallback, css, "the :focus-within fallback block exists");
   assert.doesNotMatch(outsideFallback.replace(/\/\*[\s\S]*?\*\//g, ""), /:focus-within/);
   // Heights come from SIDEBAR_ROW_HEIGHTS inline; CSS must not fight them.
   assert.doesNotMatch(cssRule(".session-tree-row"), /height/);
-  assert.equal(SIDEBAR_ROW_HEIGHTS.mobile.session, 44);
+  assert.equal(SIDEBAR_ROW_HEIGHTS.mobile.session, 54);
 });
 
 test("group headers can be dragged within their band; nothing is drawn while idle", () => {

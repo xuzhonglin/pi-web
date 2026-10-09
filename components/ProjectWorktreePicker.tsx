@@ -66,6 +66,12 @@ interface Props {
   homeDir?: string;
   /** Running and unread counts by project key: badges in the project menu, and a dot in the stacked project box for activity elsewhere. */
   projectActivity?: ReadonlyMap<string, { running: number; unread: number }>;
+  /**
+   * Extra items for the project in use, under the project list (the files
+   * tab's copy: pin project, archive older sessions, view archived). The bar
+   * above a fresh composer passes none.
+   */
+  projectActions?: SidebarMenuItem[];
   /** Stacked, without a worktree list: a disabled box saying why (a subdirectory, no git, still checking). */
   worktreeHint?: { label: string; title: string } | null;
   /** The "New worktree…" form's title. */
@@ -198,6 +204,7 @@ export function ProjectWorktreePicker({
   placeholder = "",
   homeDir,
   projectActivity,
+  projectActions,
   worktreeHint = null,
   newWorktreeTitle,
   handleRef,
@@ -354,9 +361,12 @@ export function ProjectWorktreePicker({
       };
     });
     // No project yet (a first run): the two folder items alone, no line above them.
-    const separator: SidebarMenuItem[] = choices.length > 0 ? [{ type: "separator", id: "separator" }] : [];
+    const actions = projectActions ?? [];
+    const separator: SidebarMenuItem[] = choices.length > 0 || actions.length > 0 ? [{ type: "separator", id: "separator" }] : [];
     return [
       ...choices,
+      ...(actions.length > 0 && choices.length > 0 ? [{ type: "separator", id: "separator-actions" } as const] : []),
+      ...actions,
       ...separator,
       {
         type: "item",

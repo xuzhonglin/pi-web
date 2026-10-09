@@ -6,17 +6,17 @@ import { createJiti } from "jiti";
 const jiti = createJiti(import.meta.url, { jsx: { runtime: "automatic" }, tsconfigPaths: true });
 const React = await jiti.import("react");
 const { renderToStaticMarkup } = await jiti.import("react-dom/server");
-const { I18nProvider } = await jiti.import("@/hooks/useI18n.tsx");
+const { I18nProvider } = await jiti.import("@/hooks/useI18n");
 const { SessionSidebar, sameIdsOr } = await jiti.import("./SessionSidebar.tsx");
 const { buildSessionTree, getRowOffsets, getVisibleRowIndices } = await jiti.import("@/lib/session-tree.ts");
 
-const source = await readFile(new URL("./SessionSidebar.tsx", import.meta.url), "utf8");
-const treeSource = await readFile(new URL("./SessionTree.tsx", import.meta.url), "utf8");
-const searchSource = await readFile(new URL("./SessionSearch.tsx", import.meta.url), "utf8");
-const globalStyles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
-const sidebarStyles = await readFile(new URL("../app/sidebar.css", import.meta.url), "utf8");
-const explorerSource = await readFile(new URL("./FileExplorer.tsx", import.meta.url), "utf8");
-const appShellSource = await readFile(new URL("./AppShell.tsx", import.meta.url), "utf8");
+const source = (await readFile(new URL("./SessionSidebar.tsx", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+const treeSource = (await readFile(new URL("./SessionTree.tsx", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+const searchSource = (await readFile(new URL("./SessionSearch.tsx", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+const globalStyles = (await readFile(new URL("../app/globals.css", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+const sidebarStyles = (await readFile(new URL("../app/sidebar.css", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+const explorerSource = (await readFile(new URL("./FileExplorer.tsx", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
+const appShellSource = (await readFile(new URL("./AppShell.tsx", import.meta.url), "utf8")).replace(/\r\n/g, "\n");
 
 const h = React.createElement;
 const noop = () => {};
@@ -74,13 +74,6 @@ function render(props = {}) {
   })));
 }
 
-/** The opening tag of the element with this id. */
-function openingTag(html, id) {
-  const match = html.match(new RegExp(`<[a-z]+ [^>]*id="${id}"[^>]*>`));
-  assert.ok(match, `#${id} not rendered`);
-  return match[0];
-}
-
 test("scrolling keeps the focused session and the viewport mounted without expanding the whole tree", () => {
   const sessions = Array.from({ length: 2000 }, (_, index) => session(`s${index}`, { modified: BASE - index * 60_000 }));
   const { rows } = buildSessionTree(treeInput({ sessions, currentProject: { key: "/work/alpha", root: "/work/alpha" }, moreShown: { "/work/alpha": 5000 } }));
@@ -119,8 +112,8 @@ test("subagents fold into their main session row, which carries their running, u
   const sessionRows = rows.filter((row) => row.kind === "session");
   assert.deepEqual(sessionRows.map((row) => row.family.root.id), ["main"]);
   assert.deepEqual(sessionRows[0].status, { running: true, unread: true, selected: true, transient: false });
-  // The sidebar builds that model from the whole catalog, subagents included.
-  assert.match(source, /const model = useMemo\(\(\) => buildSessionTree\(\{\s*sessions: allSessions,/);
+  // The tree builds that model from the whole catalog, subagents included.
+  assert.match(source, /const model = useMemo\(\(\) => buildSessionTree\(\{\s*sessions: allSessions,[\s\S]*?onlyProjectKey: currentProjectKey,\s*showProjectHeader: false,/);
   assert.doesNotMatch(source, /function SessionItem|function SessionTreeItem|getSessionListIndices/);
 });
 
@@ -135,59 +128,50 @@ test("only Shift skips the session deletion confirmation", () => {
   assert.match(source, /onDeleteConfirm: \(family: SessionFamily\) => \{ void performDelete\(family\); \}/);
 });
 
-test("sessions and files are two tabs of one sidebar, both kept mounted", () => {
+test("one sidebar: the wordmark, New, search, the folder, the sessions and the explorer", () => {
   const html = render({ selectedCwd: "/work/alpha", onOpenTerminal: noop });
-  // One toolbar row: only the two tabs are the tablist, New and the search
-  // follow it. No brand and no view options.
-  const tablist = html.match(/<div class="sidebar-header"><div class="sidebar-tabs-list" role="tablist" aria-label="Sidebar view">([\s\S]*?)<\/div><span class="sidebar-header-spacer"><\/span><button type="button" class="sidebar-new-button"/);
-  assert.ok(tablist, "tablist rendered at the start of the toolbar row");
-  assert.equal((tablist[1].match(/<button /g) ?? []).length, 2);
-  assert.equal((tablist[1].match(/role="tab"/g) ?? []).length, 2);
-  // Each tab is an icon and a label, as the chat bar's cells are.
-  assert.match(tablist[1], /class="sidebar-tab is-selected"><svg[^>]*class="sidebar-tab-icon"[^>]*>[\s\S]*?<\/svg><span class="sidebar-tab-label">Sessions<\/span><\/button>/);
-  assert.match(html, /<span class="sidebar-new-label">New<\/span><\/button><button type="button" title="Search conversations"/);
-  assert.doesNotMatch(html, /View options|Pi Web/);
-  const sessionsTab = openingTag(html, "session-sidebar-tab-sessions");
-  const filesTab = openingTag(html, "session-sidebar-tab-files");
-  assert.match(sessionsTab, /role="tab"/);
-  assert.match(sessionsTab, /aria-selected="true"/);
-  assert.match(sessionsTab, /aria-controls="session-sidebar-panel-sessions"/);
-  assert.match(sessionsTab, /tabindex="0"/);
-  assert.match(filesTab, /aria-selected="false"/);
-  assert.match(filesTab, /tabindex="-1"/);
-  assert.doesNotMatch(openingTag(html, "session-sidebar-panel-sessions"), /hidden/);
-  assert.match(openingTag(html, "session-sidebar-panel-files"), /role="tabpanel"[^>]*hidden=""/);
-  // The hidden files tab still holds the explorer for the cwd, under the
-  // head with the picker and its buttons (no title row).
-  const filesPanel = html.slice(html.indexOf('id="session-sidebar-panel-files"'));
-  assert.match(filesPanel, /^id="session-sidebar-panel-files"[^>]*><div class="sidebar-files-head"><div class="project-picker is-stacked" role="group"/);
-  assert.match(filesPanel, /aria-label="Open workspace terminal"/);
-  assert.match(filesPanel, /<div class="sidebar-files-scroll scrollbar-subtle">/);
-  assert.doesNotMatch(filesPanel, /sidebar-files-toolbar|sidebar-files-title/);
+  // The header block: the wordmark, New and the session search.
+  assert.match(html, /<div class="sidebar-header"><div class="sidebar-brand-row"><button type="button" class="sidebar-brand"[^>]*>Pi Web<\/button><div class="sidebar-header-actions"><button type="button" class="sidebar-new-button"/);
+  assert.match(html, /<span class="sidebar-new-label">New<\/span><\/button><button type="button" title="Search conversations" aria-label="Search conversations" aria-expanded="false" aria-controls="session-search-input" class="sidebar-search-toggle">/);
+  assert.doesNotMatch(html, /role="tab"|sidebar-tabs-list/);
+  // The folder in use, inside the header block.
+  assert.match(html, /<div class="sidebar-project-bar"><div class="project-picker is-stacked" role="group" aria-label="Project and worktree">/);
+  // The sessions panel holds the tree (or the archive); the explorer follows.
+  assert.match(html, /<div id="session-sidebar-panel-sessions" class="sidebar-panel sidebar-sessions-panel" style="flex:0 1 var\(--sidebar-session-pane-height, 320px\)">/);
+  assert.match(html, /<div class="sidebar-explorer"><div class="sidebar-explorer-head"><button type="button" class="sidebar-explorer-toggle" aria-expanded="true"><svg[^>]*class="sidebar-explorer-chevron is-open"[^>]*>[\s\S]*?<\/svg><span class="sidebar-explorer-label">File explorer<\/span>/);
+  assert.match(html, /<div class="sidebar-files-scroll scrollbar-subtle">/);
   // Pins and archive not loaded yet: the tree waits instead of flashing archived rows.
   assert.match(html, /<div class="session-tree-message">Loading\.\.\.<\/div>/);
 
-  assert.match(source, /hidden=\{sidebarTab !== "sessions"\}/);
-  assert.match(source, /hidden=\{sidebarTab !== "files"\}/);
-  assert.match(callbackBody("switchTab"), /setSidebarTab\(tab\);\s*saveSidebarTab\(tab\);/);
+  assert.match(source, /className="sidebar-panel sidebar-sessions-panel"/);
+  // The archive entry is the last row of the session pane, its label lined up
+  // with the session titles (2px border + 14px padding).
+  assert.match(source, /const model = useMemo\(\(\) => buildSessionTree\(\{\s*sessions: allSessions,[\s\S]*?showFooters: false,/);
+  assert.match(source, /\{!archiveView && model\.archivedCount > 0 && \(\s*<div className="sidebar-archived-bar">/);
+  assert.match(sidebarStyles, /\.sidebar-archived-button \{[^}]*padding: 0 10px 0 16px;/);
+  // "Show more" starts where a card's title does.
+  assert.match(sidebarStyles, /\.session-tree-more \{\s*padding-left: 16px;/);
   assert.match(source, /const treeLoading = loading \|\| !uiStateLoaded;/);
-  // display: none may drop scroll positions: they are noted and put back.
-  assert.equal((source.match(/onScrollCapture=\{rememberScroll\}/g) ?? []).length, 2);
-  assert.match(source, /if \(saved !== undefined && element\.scrollTop !== saved\) element\.scrollTop = saved;\s*\}\s*\}, \[sidebarTab, archiveView\]\);/);
-  // No vertical sessions/explorer split any more.
-  assert.doesNotMatch(source, /useResizablePanel|axis: "vertical"|--sidebar-session-pane-height|explorerOpen|file-explorer-state|data-resize-handle/);
+  // The draggable sessions/explorer split, as the classic sidebar had it.
+  assert.match(source, /const sessionPaneResizer = useResizablePanel\(\{\s*ariaLabel: t\("layout\.resizeSidebarSections"\),\s*axis: "vertical",\s*cssVariable: "--sidebar-session-pane-height",/);
+  assert.match(source, /className=\{`sidebar-section-resize-handle\$\{sessionPaneResizer\.isResizing \? " is-resizing" : ""\}`\}/);
+  assert.match(source, /data-resize-handle="sidebar-sections"/);
+  assert.match(source, /\{\.\.\.sessionPaneResizer\.separatorProps\}/);
+  assert.match(sidebarStyles, /\.sidebar-section-resize-handle \{[^}]*cursor: row-resize;/);
+  assert.doesNotMatch(source, /file-explorer-state/);
+  // render: none may drop scroll positions: they are noted and put back.
+  assert.match(source, /const saved = panelScrollTopsRef\.current\.get\(element\);\s*if \(saved !== undefined && element\.scrollTop !== saved\) element\.scrollTop = saved;/);
   assert.doesNotMatch(globalStyles, /sidebar-section-resize-handle/);
 });
 
-test("the files tab's head holds the picker and its six buttons, always the same ones in the same places", () => {
+test("the explorer head holds the fold toggle and the folder's buttons, always the same ones in the same places", () => {
   const html = render({ selectedCwd: "/work/alpha", onOpenTerminal: noop });
-  const panel = html.slice(html.indexOf('id="session-sidebar-panel-files"'));
-  const head = panel.slice(panel.indexOf('<div class="sidebar-files-head">'), panel.indexOf('<div class="sidebar-files-scroll'));
-  // The picker's group names only the project and worktree; the buttons are
-  // the head's, a group of their own after it.
+  const panel = html.slice(html.indexOf('class="sidebar-explorer"'));
+  const head = panel.slice(panel.indexOf('<div class="sidebar-explorer-head">'), panel.indexOf('<div class="sidebar-files-scroll'));
+  // The fold chevron and label, then the folder's actions at the right.
+  assert.match(head, /^<div class="sidebar-explorer-head"><button type="button" class="sidebar-explorer-toggle" aria-expanded="true"><svg[^>]*class="sidebar-explorer-chevron is-open"[^>]*>[\s\S]*?<\/svg><span class="sidebar-explorer-label">File explorer<\/span><\/button>/);
   const pickerEnd = head.indexOf('<div class="sidebar-files-actions"');
   assert.ok(pickerEnd > 0);
-  assert.equal((head.slice(0, pickerEnd).match(/class="sidebar-tool-button/g) ?? []).length, 0);
   assert.match(head.slice(pickerEnd), /^<div class="sidebar-files-actions" role="group" aria-label="File actions">/);
   // The folder's actions, then the tree's two views: what it lists and its
   // changes (its search is the header's). The changes view is there without
@@ -196,6 +180,7 @@ test("the files tab's head holds the picker and its six buttons, always the same
   const labels = [...head.slice(pickerEnd).matchAll(/<button type="button"( disabled="")? title="([^"]+)" aria-label="\2"( aria-pressed="(true|false)")? class="([^"]+)"/g)]
     .map((match) => `${match[2]}${match[1] ? " (disabled)" : ""}${match[4] ? ` pressed=${match[4]}` : ""}`);
   assert.deepEqual(labels, [
+    "Search files pressed=false",
     "Open workspace terminal",
     "Open in file manager",
     "Upload files to project root",
@@ -203,44 +188,44 @@ test("the files tab's head holds the picker and its six buttons, always the same
     "Show ignored files pressed=false",
     "0 changed files (disabled) pressed=false",
   ]);
-  assert.match(head, /<button type="button" title="Show ignored files" aria-label="Show ignored files" aria-pressed="false" class="sidebar-tool-button sidebar-files-views-start">/);
+  assert.match(head, /<button type="button" title="Show ignored files" aria-label="Show ignored files" aria-pressed="false" class="sidebar-tool-button">/);
   // The ignored-files switch is the browser's, restored after hydration like
   // the tab, and it is what the explorer lists.
   assert.match(source, /if \(loadShowIgnoredFiles\(\)\) setShowIgnoredFiles\(true\);/);
   assert.match(source, /const next = !showIgnoredFiles;\s*setShowIgnoredFiles\(next\);\s*saveShowIgnoredFiles\(next\);/);
   assert.match(source, /title=\{t\("sidebar\.showIgnoredFiles"\)\}\s*pressed=\{showIgnoredFiles\}/);
   assert.match(source, /showHidden=\{showIgnoredFiles\}/);
-  assert.doesNotMatch(head, /Search files/);
+  // The fold is the browser's, restored after hydration; folding keeps the
+  // scroll container mounted.
+  assert.match(source, /if \(loadExplorerCollapsed\(\)\) setExplorerCollapsed\(true\);/);
+  assert.match(source, /const next = !explorerCollapsed;\s*setExplorerCollapsed\(next\);\s*saveExplorerCollapsed\(next\);/);
+  assert.match(source, /<div ref=\{explorerScrollRef\} className="sidebar-files-scroll scrollbar-subtle" hidden=\{explorerCollapsed\}>/);
   assert.match(source, /disabled=\{changesCount === 0\}\s*title=\{t\("sidebar\.changedFiles", \{ count: changesCount \}\)\}\s*pressed=\{changesCount > 0 && !changesCollapsed\}/);
   assert.doesNotMatch(source, /changesCount > 0 && \(\s*<ToolbarIconButton/);
   // Without a terminal (no onOpenTerminal) the other five stay.
   const noTerminal = render({ selectedCwd: "/work/alpha" });
   assert.doesNotMatch(noTerminal, /Open workspace terminal/);
   assert.match(noTerminal, /aria-label="Open in file manager"/);
-  // The header's search button is the tab's: the files tab's searches its
-  // files; elsewhere, and on a files tab without a folder, the sessions.
-  assert.match(source, /const searchesFiles = sidebarTab === "files" && explorerCwd !== null;/);
-  assert.match(source, /if \(searchesFiles\) \{\s*setFileSearchOpen\(\(open\) => !open\);\s*return;\s*\}\s*if \(sidebarTab !== "sessions"\) \{\s*switchTab\("sessions"\);\s*setSessionSearchOpen\(true\);\s*return;\s*\}\s*setSessionSearchOpen\(\(open\) => !open\);/);
-  assert.match(source, /title=\{searchesFiles \? t\("sidebar\.searchFiles"\) : t\("sidebar\.toggleSessionSearch"\)\}\s*aria-label=\{searchesFiles \? t\("sidebar\.searchFiles"\) : t\("sidebar\.toggleSessionSearch"\)\}\s*aria-expanded=\{searchesFiles \? fileSearchOpen : sessionSearchOpen\}\s*aria-controls=\{searchesFiles \? "file-search-input" : "session-search-input"\}/);
-  assert.match(source, /className=\{`sidebar-search-toggle\$\{\(searchesFiles \? fileSearchOpen : sessionSearchOpen\) \? " is-active" : ""\}`\}/);
+  // The file search is the explorer's own toggle now.
+  assert.match(source, /onClick=\{\(\) => setFileSearchOpen\(\(open\) => !open\)\}\s*title=\{t\("sidebar\.searchFiles"\)\}\s*pressed=\{fileSearchOpen\}/);
   assert.match(explorerSource, /ref=\{searchInputRef\}\s*id="file-search-input"/);
-  // The sessions tab renders it as the sessions search.
+  // The toolbar's search renders as the session search.
   assert.match(html, /title="Search conversations" aria-label="Search conversations" aria-expanded="false" aria-controls="session-search-input" class="sidebar-search-toggle"/);
-  assert.doesNotMatch(source, /kind: "files"|filesMenuItems|TabRowToggle/);
+  assert.doesNotMatch(source, /kind: "files"|filesMenuItems|TabRowToggle|searchesFiles/);
   // No box of its own: the head sits flat under the toolbar row's line and
   // a line of its own parts it from the tree. None between the boxes and the
   // keys: square, borderless and dim, the folder's four from the left, the
   // tree's two views at the right end, the row's edges on the boxes'. At the
   // sidebar's 180px minimum (160px inside the head's padding) all six fit:
   // six 21px keys and five 6px gaps.
-  assert.match(sidebarStyles, /\.sidebar-files-head \{\s*display: flex;\s*flex: none;\s*flex-direction: column;\s*padding: 10px 10px 4px;\s*border-bottom: 1px solid var\(--border\);\s*\}/);
-  assert.match(source, /<div className="sidebar-files-head">/);
+  assert.match(sidebarStyles, /\.sidebar-explorer-head \{\s*display: flex;\s*flex: none;\s*align-items: center;\s*gap: 6px;\s*min-height: 34px;/);
+  assert.match(source, /<div className="sidebar-explorer-head">/);
   assert.doesNotMatch(source, /explorerScrolled|is-scrolled/);
   assert.doesNotMatch(sidebarStyles, /sidebar-files-card|sidebar-files-actions::before|sidebar-tabs\.is-files|sidebar-icon-button|is-scrolled/);
-  assert.match(sidebarStyles, /\.sidebar-files-actions \{\s*display: flex;\s*align-items: center;\s*gap: 6px;\s*margin-top: 4px;\s*\}/);
-  assert.match(sidebarStyles, /\.sidebar-files-views-start \{\s*margin-left: auto;\s*\}/);
+  assert.match(sidebarStyles, /\.sidebar-files-actions \{\s*display: flex;\s*align-items: center;\s*gap: 2px;\s*margin-left: auto;\s*\}/);
+  assert.match(sidebarStyles, /\.sidebar-explorer\.is-collapsed \{\s*flex: 0 0 auto;\s*min-height: 0;\s*\}/);
   assert.doesNotMatch(sidebarStyles, /\.sidebar-tool-button:last-child/);
-  assert.match(sidebarStyles, /\.sidebar-tool-button \{\s*display: flex;\s*flex: 0 1 32px;\s*align-items: center;\s*justify-content: center;\s*min-width: 21px;\s*height: 32px;\s*padding: 0;\s*border: 0;\s*border-radius: 7px;\s*background: transparent;\s*color: var\(--text-dim\);/);
+  assert.match(sidebarStyles, /\.sidebar-tool-button \{\s*display: flex;\s*flex: 0 1 26px;\s*align-items: center;\s*justify-content: center;\s*min-width: 20px;\s*height: 26px;\s*padding: 0;\s*border: 0;\s*border-radius: 6px;\s*background: transparent;\s*color: var\(--text-dim\);/);
   assert.match(sidebarStyles, /\.sidebar-tool-button:not\(:disabled\):hover \{\s*background: var\(--bg-selected\);\s*color: var\(--text\);/);
   assert.match(sidebarStyles, /@media \(pointer: coarse\) \{[\s\S]*?\.sidebar-tool-button \{\s*flex-basis: 36px;\s*height: 36px;\s*\}/);
   // Little room above and below the keys: 4px to the boxes, 4px to the line,
@@ -250,35 +235,36 @@ test("the files tab's head holds the picker and its six buttons, always the same
   assert.doesNotMatch(sidebarStyles, /sidebar-files-toolbar|sidebar-files-title|is-pressed/);
 });
 
-test("the toolbar row is the chat bar's cells, and gives up labels only where they do not fit", () => {
-  // 36px with its line, as the chat's top bar beside it (AppShell, border-box
-  // from the global reset), so the two read as one bar; the chosen tab and
-  // the open search take its accent line.
-  assert.match(sidebarStyles, /\.sidebar-header \{\s*display: flex;\s*flex: none;\s*align-items: stretch;\s*height: 36px;\s*box-sizing: border-box;\s*border-bottom: 1px solid var\(--border\);\s*\}/);
+test("the header block is the classic one, and gives up the New label only where it does not fit", () => {
+  assert.match(sidebarStyles, /\.sidebar-header \{\s*display: flex;\s*flex: none;\s*flex-direction: column;\s*padding: 12px 10px 10px;\s*border-bottom: 1px solid var\(--border\);\s*\}/);
   assert.match(appShellSource, /borderBottom: "1px solid var\(--border\)", height: "calc\(36px \+ env\(safe-area-inset-top\)\)", paddingTop: "env\(safe-area-inset-top\)"/);
   assert.match(globalStyles, /^\* \{\s*box-sizing: border-box;/m);
-  assert.match(sidebarStyles, /\.sidebar-tab,\s*\.sidebar-new-button,\s*\.sidebar-search-toggle \{[^}]*padding: 0 12px;\s*border: 0;\s*border-top: 2px solid transparent;\s*border-radius: 0;/);
-  assert.match(sidebarStyles, /\.sidebar-tab,\s*\.sidebar-new-button \{\s*border-right: 1px solid var\(--border\);\s*\}/);
-  assert.match(sidebarStyles, /\.sidebar-tab\.is-selected,\s*\.sidebar-search-toggle\.is-active \{\s*border-top-color: var\(--accent\);\s*background: var\(--bg-selected\);\s*color: var\(--text\);\s*\}/);
-  assert.match(sidebarStyles, /\.sidebar-search-toggle \{\s*width: 36px;\s*padding: 0;\s*\}/);
-  // Measured, since the labels' widths change with the language: New keeps
-  // its +, then the tabs their icons. A hidden label is still the name.
+  // The wordmark is monospace; New and the search are the classic rounded buttons.
+  assert.match(sidebarStyles, /\.sidebar-brand \{\s*min-width: 6ch;[\s\S]*?font-family: var\(--font-mono\);[\s\S]*?font-weight: 700;/);
+  assert.match(sidebarStyles, /\.sidebar-new-button,\s*\.sidebar-search-toggle \{\s*display: flex;[\s\S]*?height: 32px;[\s\S]*?border: 1px solid var\(--border\);[\s\S]*?border-radius: 7px;[\s\S]*?background: var\(--bg-hover\);/);
+  assert.match(sidebarStyles, /\.sidebar-search-toggle \{\s*width: 32px;\s*padding: 0;\s*\}/);
+  assert.match(sidebarStyles, /\.sidebar-search-toggle\.is-active \{\s*background: var\(--bg-selected\);\s*color: var\(--accent\);\s*border-color: var\(--accent\);\s*\}/);
+  // The search field sits under the folder, in the header block.
+  assert.match(sidebarStyles, /\.sidebar-search-input \{[^}]*margin-top: 6px;/);
+  // Measured, since the label's width changes with the language: New keeps its +.
   const fit = between("function useHeaderFit(", "\nfunction buttonAnchor(");
   assert.match(fit, /useLayoutEffect\(\(\) => \{/);
   assert.match(fit, /for \(const level of \["0", "1", "2"\]\) \{\s*header\.dataset\.fit = level;\s*if \(header\.scrollWidth <= header\.clientWidth\) return;\s*\}/);
   assert.match(fit, /const observer = new ResizeObserver\(fit\);\s*observer\.observe\(header\);\s*return \(\) => observer\.disconnect\(\);\s*\}, \[ref, labels\]\);/);
-  assert.match(source, /useHeaderFit\(headerRef, \[t\("sidebar\.tabSessions"\), t\("sidebar\.tabFiles"\), t\("sidebar\.new"\), explorerCwd && changesCount > 0 \? changesCount : "", sidebarTab\]\.join\("\\n"\)\);/);
+  assert.match(source, /useHeaderFit\(headerRef, \["Pi Web", t\("sidebar\.new"\), t\("sidebar\.toggleSessionSearch"\)\]\.join\("\\n"\)\);/);
   assert.match(source, /<div ref=\{headerRef\} className="sidebar-header">/);
-  assert.match(sidebarStyles, /\.sidebar-header\[data-fit="1"\] \.sidebar-new-button,\s*\.sidebar-header\[data-fit="2"\] \.sidebar-new-button \{\s*width: 36px;\s*padding: 0;\s*\}/);
-  assert.match(sidebarStyles, /\.sidebar-header\[data-fit="1"\] \.sidebar-new-label,\s*\.sidebar-header\[data-fit="2"\] \.sidebar-new-label,\s*\.sidebar-header\[data-fit="2"\] \.sidebar-tab-label \{\s*position: absolute;\s*width: 1px;\s*height: 1px;\s*overflow: hidden;\s*clip: rect\(0 0 0 0\);/);
-  // The brand is the new-session page's alone.
-  assert.doesNotMatch(source, /PiWebTitle|useScramble|SCRAMBLE_CHARS/);
+  assert.match(sidebarStyles, /\.sidebar-header\[data-fit="1"\] \.sidebar-new-button,\s*\.sidebar-header\[data-fit="2"\] \.sidebar-new-button \{\s*width: 32px;\s*padding: 0;\s*\}/);
+  assert.match(sidebarStyles, /\.sidebar-header\[data-fit="1"\] \.sidebar-new-label,\s*\.sidebar-header\[data-fit="2"\] \.sidebar-new-label \{\s*position: absolute;\s*width: 1px;\s*height: 1px;\s*overflow: hidden;\s*clip: rect\(0 0 0 0\);/);
+  // The wordmark is the sidebar's again: it scrambles to the versions on click.
+  assert.match(source, /function PiWebTitle\(\)/);
+  assert.match(source, /const SCRAMBLE_CHARS = /);
+  assert.match(source, /const display = useScramble\(target, scrambling\);/);
 });
 
-test("the tab chosen last is shown again after hydration, not in the first render", () => {
+test("the explorer fold and the other sidebar prefs come back after hydration, not in the first render", () => {
   const serverHtml = render();
   const saved = {
-    "pi-web:sidebar-tab": "files",
+    "pi-web:sidebar-explorer-collapsed": "true",
     "pi-web:sidebar-groups": JSON.stringify({ "/work/alpha": false }),
     "pi-web:sidebar-pins-collapsed": "true",
     "pi-web:sidebar-files-show-ignored": "true",
@@ -294,39 +280,35 @@ test("the tab chosen last is shown again after hydration, not in the first rende
     if (previous === undefined) delete globalThis.window;
     else globalThis.window = previous;
   }
-  // The hydrating render must match the server's HTML: the Sessions tab and
-  // its panel, whatever the browser saved.
+  // The hydrating render must match the server's HTML, whatever the browser saved.
   assert.equal(clientHtml, serverHtml);
-  assert.match(openingTag(clientHtml, "session-sidebar-tab-sessions"), /aria-selected="true"/);
-  assert.match(openingTag(clientHtml, "session-sidebar-panel-files"), /hidden=""/);
-  assert.match(clientHtml, /<div class="sidebar-header"><div class="sidebar-tabs-list" role="tablist"/);
+  assert.match(clientHtml, /<div class="sidebar-header"><div class="sidebar-brand-row"><button type="button" class="sidebar-brand"[^>]*>Pi Web<\/button>/);
+  assert.match(clientHtml, /<div class="sidebar-explorer"><div class="sidebar-explorer-head">/);
 
-  // The saved tab, group choices, pinned section and ignored-files switch come
-  // back in a mount effect.
-  assert.match(source, /const \[sidebarTab, setSidebarTab\] = useState<SidebarTab>\("sessions"\);/);
+  // The fold, group choices, pinned section and ignored-files switch come back
+  // in a mount effect.
+  assert.match(source, /const \[explorerCollapsed, setExplorerCollapsed\] = useState\(false\);/);
   assert.match(source, /const \[groupExpansion, setGroupExpansion\] = useState<Readonly<Record<string, boolean>>>\(\{\}\);/);
   assert.match(source, /const \[pinnedCollapsed, setPinnedCollapsed\] = useState\(false\);/);
   assert.match(source, /const \[showIgnoredFiles, setShowIgnoredFiles\] = useState\(false\);/);
-  assert.doesNotMatch(source, /useState[^;\n]*\(\(\) => load(?:SidebarTab|GroupExpansion|PinnedCollapsed|ShowIgnoredFiles)\(\)\)/);
+  assert.doesNotMatch(source, /useState[^;\n]*\(\(\) => load(?:GroupExpansion|PinnedCollapsed|ShowIgnoredFiles|ExplorerCollapsed)\(\)\)/);
   assert.match(
     source,
-    /useEffect\(\(\) => \{\s*const tab = loadSidebarTab\(\);\s*if \(tab !== "sessions"\) setSidebarTab\(tab\);\s*const groups = loadGroupExpansion\(\);\s*if \(Object\.keys\(groups\)\.length > 0\) setGroupExpansion\(groups\);\s*if \(loadPinnedCollapsed\(\)\) setPinnedCollapsed\(true\);\s*if \(loadShowIgnoredFiles\(\)\) setShowIgnoredFiles\(true\);\s*forgetRetiredSidebarKeys\(\);\s*\}, \[\]\);/,
+    /useEffect\(\(\) => \{\s*const groups = loadGroupExpansion\(\);\s*if \(Object\.keys\(groups\)\.length > 0\) setGroupExpansion\(groups\);\s*if \(loadPinnedCollapsed\(\)\) setPinnedCollapsed\(true\);\s*if \(loadShowIgnoredFiles\(\)\) setShowIgnoredFiles\(true\);\s*if \(loadExplorerCollapsed\(\)\) setExplorerCollapsed\(true\);\s*forgetRetiredSidebarKeys\(\);\s*\}, \[\]\);/,
   );
 });
 
-test("the files tab keeps FileExplorer mounted under an always-present scroll container", () => {
-  assert.match(source, /<div ref=\{explorerScrollRef\} className="sidebar-files-scroll scrollbar-subtle">\s*\{explorerCwd && \(\s*<FileExplorer/);
+test("the explorer keeps FileExplorer mounted under an always-present scroll container", () => {
+  assert.match(source, /<div ref=\{explorerScrollRef\} className="sidebar-files-scroll scrollbar-subtle" hidden=\{explorerCollapsed\}>\s*\{explorerCwd && \(\s*<FileExplorer/);
   assert.match(source, /useScrollbarVisibility\(explorerScrollRef\);/);
   assert.match(source, /const explorerCwd = selectedCwd \?\? selectedCwdProp \?\? null;/);
   assert.match(source, /onOpenTerminal\(explorerCwd\)/);
   assert.match(sidebarStyles, /\.sidebar-files-scroll \{[^}]*flex: 1 1 auto;[^}]*min-height: 0;/);
 });
 
-test("arrow keys move between the tabs and the search toggle opens the sessions tab", () => {
-  const keys = source.slice(source.indexOf("const handleTabKeyDown"), source.indexOf("// A session family's pin"));
-  assert.match(keys, /event\.key !== "ArrowLeft" && event\.key !== "ArrowRight" && event\.key !== "Home" && event\.key !== "End"/);
-  assert.match(keys, /switchTab\(next\);\s*\(next === "sessions" \? sessionsTabRef : filesTabRef\)\.current\?\.focus\(\);/);
-  assert.match(source, /if \(sidebarTab !== "sessions"\) \{\s*switchTab\("sessions"\);\s*setSessionSearchOpen\(true\);\s*return;\s*\}/);
+test("the toolbar's search toggle opens the session search; the tabs are gone", () => {
+  assert.match(source, /onClick=\{\(\) => setSessionSearchOpen\(\(open\) => !open\)\}/);
+  assert.doesNotMatch(source, /handleTabKeyDown|role="tab"|switchTab|sidebarTab/);
 });
 
 test("does not register row-level session deletion shortcuts", () => {
@@ -381,6 +363,11 @@ test("includes project activity counts in accessible labels", () => {
   // The files tab's project menu shows the group headers' own badge.
   assert.match(treeSource, /export function ActivitySummary\(/);
   assert.match(source, /projectActivity=\{projectActivity\}/);
+  // The project in use keeps its actions (pin, archive older, view archived)
+  // in the picker's menu, now that the sessions list has no group header.
+  assert.match(source, /projectActions=\{filesProjectActions\}/);
+  assert.match(source, /const filesProjectActions: SidebarMenuItem\[\] = currentMenuProject \? \[/);
+  assert.match(source, /const currentOlderCount = useMemo\(\s*\(\) => \(currentProjectKey \? familiesToArchive\(treeSelectionInput, currentProjectKey, ARCHIVE_OLDER_THAN_MS, Date\.now\(\)\)\.length : 0\),/);
 });
 
 test("project activity ignores archived families", () => {
@@ -464,7 +451,7 @@ test("expanding, collapsing or paging a group never changes the cwd", () => {
   assert.match(treeSource, /onClick=\{\(event\) => handlers\.current\.onToggleGroup\(project\.key, event\.altKey\)\}/);
   assert.match(callbackBody("setAllGroupsExpanded"), /for \(const project of model\.projects\) \{\s*delete next\[project\.key\];\s*next\[project\.key\] = expanded\(project\);\s*\}/);
   // "Open in Files" of another project is the one deliberate switch from a group.
-  assert.match(callbackBody("openProjectInFiles"), /if \(!project\.current\) setSelectedCwd\(project\.root\);[\s\S]*?switchTab\("files"\);/);
+  assert.match(callbackBody("openProjectInFiles"), /if \(!project\.current\) setSelectedCwd\(project\.root\);\s*filesPickerRef\.current\?\.button\("project"\)\?\.focus\(\{ preventScroll: true \}\);/);
 });
 
 test("a new session moves the cwd and hands the shell the target's project", () => {
@@ -533,7 +520,7 @@ test("the bar hears of the sidebar's cwd only when something it shows changed", 
   assert.match(snapshot, /worktrees: listed \? worktreeState\.worktrees\.map\(\(\{ path, branch, isMain \}\) => \(\{ path, branch, isMain \}\)\) : null,/);
   assert.match(snapshot, /currentWorktreePath: listed \? currentWorktreePath : null,/);
   assert.match(snapshot, /projects: projectChoiceList,/);
-  assert.match(source, /const projectChoiceList = useMemo\(\(\) => mergeProjectChoices\(model\.projects, recentProjects\), \[model\.projects, recentProjects\]\);/);
+  assert.match(source, /const projectChoiceList = useMemo\(\(\) => mergeProjectChoices\(projectChoiceModel\.projects, recentProjects\), \[projectChoiceModel\.projects, recentProjects\]\);/);
   assert.match(snapshot, /const newSessionContextSignature = newSessionContextKey\(newSessionContext\);/);
   assert.match(snapshot, /useEffect\(\(\) => \{\s*onNewSessionContextChange\?\.\(newSessionContextRef\.current\);\s*\}, \[newSessionContextSignature, onNewSessionContextChange\]\);/);
 });
@@ -581,12 +568,10 @@ test("a cwd prop that went away and came back still moves the sidebar", () => {
 
 test("the footer opens the project list in the files tab; the archive view replaces the tree", () => {
   const footer = source.slice(source.indexOf("const handleOpenOtherProject"), source.indexOf("const sessionMenuItems"));
-  assert.match(footer, /filesTabFocusRef\.current = "project-list";\s*switchTab\("files"\);\s*\};/);
-  // Once the tab shows, the picker's project menu opens below its button.
-  assert.match(footer, /if \(target === "project-list"\) filesPickerRef\.current\?\.openMenu\("project"\);\s*else filesPickerRef\.current\?\.button\("project"\)\?\.focus\(\{ preventScroll: true \}\);\s*\}, \[sidebarTab\]\);/);
+  assert.match(footer, /filesPickerRef\.current\?\.openMenu\("project"\);/);
   assert.match(source, /onOpenOtherProject: handleOpenOtherProject,/);
   assert.match(source, /onOpenArchive: openArchiveView,/);
-  assert.match(callbackBody("openArchiveView"), /setArchiveView\(true\);[\s\S]*?setSessionSearchOpen\(false\);\s*switchTab\("sessions"\);/);
+  assert.match(callbackBody("openArchiveView"), /setArchiveView\(true\);[\s\S]*?setSessionSearchOpen\(false\);/);
   assert.match(source, /<div className="sidebar-sessions-view" hidden=\{archiveView\}>\s*<SessionTree\s+\{\.\.\.treeProps\}\s+rows=\{model\.rows\}\s+emptyLabel=\{t\("sidebar\.noSessions"\)\}\s+reveal=\{treeReveal\}\s+onRevealHandled=\{handleRevealHandled\}\s+\/>/);
   assert.match(source, /<SessionTree \{\.\.\.treeProps\} rows=\{archiveRows\} emptyLabel=\{t\("sidebar\.noArchived"\)\} \/>/);
   assert.match(source, /const sessionMenuItems = \(row: SessionRow\): SidebarMenuItem\[\] => sessionMenuEntries\(row\.context, row\.status\)/);
@@ -595,16 +580,17 @@ test("the footer opens the project list in the files tab; the archive view repla
 
 test("the files tab shows the composer bar's picker as two rows, with removal and activity", () => {
   const html = render({ selectedCwd: "/work/alpha" });
-  const filesPanel = html.slice(html.indexOf('id="session-sidebar-panel-files"'));
+  const projectBar = html.slice(html.indexOf('<div class="sidebar-project-bar">'), html.indexOf('<div id="session-sidebar-panel-sessions"'));
   // Before the sidebar has a cwd: the project row asks for one.
-  assert.match(filesPanel, /<div class="project-picker is-stacked" role="group" aria-label="Project and worktree"><button type="button" class="project-picker-button is-project is-empty" title="" aria-haspopup="menu" aria-expanded="false">/);
-  assert.match(filesPanel, /<span class="project-picker-label">Select project…<\/span>/);
+  assert.match(projectBar, /<div class="project-picker is-stacked" role="group" aria-label="Project and worktree"><button type="button" class="project-picker-button is-project is-empty" title="" aria-haspopup="menu" aria-expanded="false">/);
+  assert.match(projectBar, /<span class="project-picker-label">Select project…<\/span>/);
   const pickerStart = source.indexOf("<ProjectWorktreePicker\n");
   const picker = source.slice(pickerStart, source.indexOf("/>", pickerStart));
   assert.match(picker, /layout="stacked"/);
   // The bar's context, or every project while there is no cwd yet.
-  assert.match(picker, /context=\{newSessionContext \?\? \{ project: null, worktrees: null, currentWorktreePath: null, projects: projectChoiceList \}\}/);
-  assert.match(picker, /worktreeHint=\{inactiveWorktreeSelector\}/);
+  assert.match(picker, /context=\{pickerContext\}/);
+  assert.match(source, /const pickerContext = sessionSearchOpen && newSessionContext\s*\?\s*\{ \.\.\.newSessionContext, worktrees: null, currentWorktreePath: null \}\s*:\s*newSessionContext \?\? fallbackPickerContext;/);
+  assert.match(picker, /worktreeHint=\{sessionSearchOpen \? null : inactiveWorktreeSelector\}/);
   assert.match(picker, /onPick=\{handleFilesPick\}/);
   assert.match(picker, /onUseDefaultDirectory=\{\(\) => \{ void handleDefaultCwd\(\); \}\}/);
   assert.match(picker, /onOpenFolder=\{handleCustomPathClick\}/);
@@ -619,8 +605,9 @@ test("the files tab shows the composer bar's picker as two rows, with removal an
   assert.match(remove, /if \(data\.dirty && !force\) return "dirty";\s*return \{ error: data\.error \?\? `HTTP \$\{res\.status\}` \};/);
   assert.match(remove, /if \(currentWorktreePath === path\) setSelectedCwd\(project\.root\);\s*setWtRefreshKey\(\(k\) => k \+ 1\);\s*return "removed";/);
   // Nothing is left of the inline-styled dropdowns.
-  assert.doesNotMatch(source, /AnimatedDropdown|DROPDOWN_STYLE|PathLabel|dropdownOpen|projectFilter|wtFilter|wtNewBranch|wtDropdownOpen|wtConfirmRemove|wtBusy|wtError|showProjectActivity|sidebar-project|sidebar-worktree/);
-  assert.doesNotMatch(sidebarStyles, /\.sidebar-project|\.sidebar-worktree-(?:button|icon|label|note|chevron)/);
+  assert.doesNotMatch(source, /AnimatedDropdown|DROPDOWN_STYLE|PathLabel|dropdownOpen|projectFilter|wtFilter|wtNewBranch|wtDropdownOpen|wtConfirmRemove|wtBusy|wtError|showProjectActivity/);
+  assert.match(source, /className="sidebar-project-bar"/);
+  assert.doesNotMatch(sidebarStyles, /\.sidebar-project-(?:button|icon|label|note|chevron)|\.sidebar-worktree-(?:button|icon|label|note|chevron)/);
 });
 
 test("the group that stops being current keeps its rows open", () => {
@@ -644,7 +631,7 @@ test("the running poll keeps the same Set while the running ids stay the same", 
 
 test("focus that went away with the archive view, a toast or a delete confirmation lands on what replaced it", () => {
   // Opening the archive: Back; going back: the footer link, else the selected tab.
-  const archive = source.slice(source.indexOf("const archiveBackRef"), source.indexOf("const handleTabKeyDown"));
+  const archive = source.slice(source.indexOf("const archiveBackRef"), source.indexOf("// (The tabs' keyboard handling"));
   assert.match(archive, /if \(previousArchiveViewRef\.current === archiveView\) return;/, "nothing moves on mount");
   assert.match(archive, /if \(archiveView\) \{\s*focusIfHidden\(archiveBackRef\.current\);/);
   assert.match(archive, /querySelector<HTMLElement>\('\[data-row-key="footer-archived"\] button'\);\s*const target = footer && footer\.getClientRects\(\)\.length > 0 \? footer : selectedTabButton\(\);\s*focusIfHidden\(target\);/);

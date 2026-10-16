@@ -236,16 +236,17 @@ test("the explorer head holds the fold toggle and the folder's buttons, always t
 });
 
 test("the header block is the classic one, and gives up the New label only where it does not fit", () => {
-  assert.match(sidebarStyles, /\.sidebar-header \{\s*display: flex;\s*flex: none;\s*flex-direction: column;\s*padding: 12px 10px 10px;\s*border-bottom: 1px solid var\(--border\);\s*\}/);
+  assert.match(sidebarStyles, /\.sidebar-header \{\s*display: flex;\s*flex: none;\s*flex-direction: column;\s*height: auto;\s*padding: 0;\s*border-bottom: 0;\s*\}/);
   assert.match(appShellSource, /borderBottom: "1px solid var\(--border\)", height: "calc\(36px \+ env\(safe-area-inset-top\)\)", paddingTop: "env\(safe-area-inset-top\)"/);
   assert.match(globalStyles, /^\* \{\s*box-sizing: border-box;/m);
   // The wordmark is monospace; New and the search are the classic rounded buttons.
-  assert.match(sidebarStyles, /\.sidebar-brand \{\s*min-width: 6ch;[\s\S]*?font-family: var\(--font-mono\);[\s\S]*?font-weight: 700;/);
-  assert.match(sidebarStyles, /\.sidebar-new-button,\s*\.sidebar-search-toggle \{\s*display: flex;[\s\S]*?height: 32px;[\s\S]*?border: 1px solid var\(--border\);[\s\S]*?border-radius: 7px;[\s\S]*?background: var\(--bg-hover\);/);
-  assert.match(sidebarStyles, /\.sidebar-search-toggle \{\s*width: 32px;\s*padding: 0;\s*\}/);
-  assert.match(sidebarStyles, /\.sidebar-search-toggle\.is-active \{\s*background: var\(--bg-selected\);\s*color: var\(--accent\);\s*border-color: var\(--accent\);\s*\}/);
+  assert.match(sidebarStyles, /\.sidebar-brand \{\s*align-self: center;\s*min-width: 6ch;[\s\S]*?font-family: var\(--font-mono\);[\s\S]*?font-weight: 700;/);
+  assert.match(sidebarStyles, /\.sidebar-brand-row \{\s*display: flex;\s*align-items: stretch;\s*height: 36px;[\s\S]*?border-bottom: 1px solid var\(--border\);\s*\}/);
+  assert.match(sidebarStyles, /\.sidebar-new-button,\s*\.sidebar-search-toggle \{\s*display: flex;[\s\S]*?height: auto;[\s\S]*?border-top: 2px solid transparent;[\s\S]*?border-radius: 0;[\s\S]*?background: transparent;/);
+  assert.match(sidebarStyles, /\.sidebar-search-toggle \{\s*width: 36px;\s*padding: 0;\s*\}/);
+  assert.match(sidebarStyles, /\.sidebar-search-toggle\.is-active \{\s*border-top-color: var\(--accent\);\s*background: var\(--bg-selected\);\s*color: var\(--text\);\s*\}/);
   // The search field sits under the folder, in the header block.
-  assert.match(sidebarStyles, /\.sidebar-search-input \{[^}]*margin-top: 6px;/);
+  assert.match(sidebarStyles, /\.sidebar-search-input \{[^}]*margin: 8px 10px 10px;/);
   // Measured, since the label's width changes with the language: New keeps its +.
   const fit = between("function useHeaderFit(", "\nfunction buttonAnchor(");
   assert.match(fit, /useLayoutEffect\(\(\) => \{/);
@@ -253,7 +254,7 @@ test("the header block is the classic one, and gives up the New label only where
   assert.match(fit, /const observer = new ResizeObserver\(fit\);\s*observer\.observe\(header\);\s*return \(\) => observer\.disconnect\(\);\s*\}, \[ref, labels\]\);/);
   assert.match(source, /useHeaderFit\(headerRef, \["Pi Web", t\("sidebar\.new"\), t\("sidebar\.toggleSessionSearch"\)\]\.join\("\\n"\)\);/);
   assert.match(source, /<div ref=\{headerRef\} className="sidebar-header">/);
-  assert.match(sidebarStyles, /\.sidebar-header\[data-fit="1"\] \.sidebar-new-button,\s*\.sidebar-header\[data-fit="2"\] \.sidebar-new-button \{\s*width: 32px;\s*padding: 0;\s*\}/);
+  assert.match(sidebarStyles, /\.sidebar-header\[data-fit="1"\] \.sidebar-new-button,\s*\.sidebar-header\[data-fit="2"\] \.sidebar-new-button \{\s*width: 36px;\s*padding: 0;\s*\}/);
   assert.match(sidebarStyles, /\.sidebar-header\[data-fit="1"\] \.sidebar-new-label,\s*\.sidebar-header\[data-fit="2"\] \.sidebar-new-label \{\s*position: absolute;\s*width: 1px;\s*height: 1px;\s*overflow: hidden;\s*clip: rect\(0 0 0 0\);/);
   // The wordmark is the sidebar's again: it scrambles to the versions on click.
   assert.match(source, /function PiWebTitle\(\)/);

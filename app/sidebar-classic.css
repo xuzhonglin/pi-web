@@ -1,14 +1,11 @@
-/* Session sidebar: tabs, project groups, session rows, files tab. */
-
-/*
+/* Session sidebar: tabs, project groups, session rows, files tab. *//*
  * Session tree (components/SessionTree.tsx). Rows are absolutely positioned
  * by the virtualizer, which also sets each row's height inline from
  * SIDEBAR_ROW_HEIGHTS (lib/session-tree.ts), so no height is set here.
  * `.session-tree.is-mobile` follows the component's layout prop (useIsMobile),
  * not a media query, so the CSS always matches the heights the rows got.
  */
-.layout-classic .session-tree {
-  /* The drag ghost's box: it sits outside the scroll box (SessionTree). */
+.layout-classic .session-tree {/* The drag ghost's box: it sits outside the scroll box (SessionTree). */
   position: relative;
   display: flex;
   flex: 1 1 auto;
@@ -29,8 +26,7 @@
   color: #f87171;
 }
 
-.layout-classic .session-tree-scroll {
-  /* Group, pinned and archive rows keep a small inset from the edges. A
+.layout-classic .session-tree-scroll {/* Group, pinned and archive rows keep a small inset from the edges. A
      classic scrollbar takes width on the right only, so the left inset grows
      by that width and the right one shrinks by it. The session cards span the
      full width instead, so a selected card reaches both edges. */
@@ -57,9 +53,7 @@
   display: flex;
   align-items: center;
   min-width: 0;
-}
-
-/* Button reset with no specificity, so every class rule below wins over it. */
+}/* Button reset with no specificity, so every class rule below wins over it. */
 .layout-classic :where(.session-tree button) {
   margin: 0;
   border: 0;
@@ -78,23 +72,6 @@
   outline-offset: -2px;
 }
 
-/* A saved session's main control is a link (middle-click, Ctrl/Cmd-click open
-   it in a new tab): it looks exactly like the button it replaced. */
-.layout-classic a.session-tree-main {
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.layout-classic .session-tree a.session-tree-main:focus {
-  outline: none;
-}
-
-.layout-classic .session-tree a.session-tree-main:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
 .layout-classic .session-tree-chevron {
   flex: none;
   color: var(--text-dim);
@@ -103,9 +80,7 @@
 
 .layout-classic .session-tree-chevron.is-open {
   transform: rotate(90deg);
-}
-
-/* Pinned section header: the whole row toggles the section. */
+}/* Pinned section header: the whole row toggles the section. */
 .layout-classic .session-tree-pinned-header {
   align-items: stretch;
 }
@@ -154,9 +129,7 @@
 
 .layout-classic .session-tree-pinned-dot.is-unread {
   background: #0891b2;
-}
-
-/* A line between the pinned section and the project's own sessions. */
+}/* A line between the pinned section and the project's own sessions. */
 .layout-classic .session-tree-divider::after {
   content: "";
   position: absolute;
@@ -165,9 +138,7 @@
   left: 10px;
   height: 1px;
   background: var(--border);
-}
-
-/* Session row: the classic two-line card. Line one is the title; line two
+}/* Session row: the classic two-line card. Line one is the title; line two
    the time (or the running/unread marker), the message count and the worktree
    branch. Rows run the full width, a left accent bar marks the selection, and
    the actions take a column at the right on hover. */
@@ -240,12 +211,11 @@
     transform: scale(1.6);
     opacity: 0;
   }
-}
-
-/* The title takes the full text color; the second line is one step dimmer,
+}/* The title takes the full text color; the second line is one step dimmer,
    so the two lines read as primary and secondary. */
 .layout-classic .session-tree-title {
   display: block;
+  flex: none;
   min-width: 0;
   overflow: hidden;
   color: var(--text);
@@ -256,14 +226,10 @@
 
 .layout-classic .session-tree-session.is-archived .session-tree-title {
   color: var(--text-muted);
-}
-
-/* The selected row's title is heavier, as the classic item made it. */
+}/* The selected row's title is heavier, as the classic item made it. */
 .layout-classic .session-tree-session.is-selected .session-tree-title {
   font-weight: 500;
-}
-
-/* A Fork's copy: the ellipsis cuts its title before the suffix that tells it
+}/* A Fork's copy: the ellipsis cuts its title before the suffix that tells it
    from its source ("… · 3f9a"), never the suffix. */
 .layout-classic .session-tree-title.has-fork-suffix {
   display: flex;
@@ -278,9 +244,7 @@
 .layout-classic .session-tree-title-suffix {
   flex: none;
   white-space: pre;
-}
-
-/* The second line: the marker or the time, then the message count and branch. */
+}/* The second line: the marker or the time, then the message count and branch. */
 .layout-classic .session-tree-sub {
   display: flex;
   align-items: center;
@@ -292,8 +256,7 @@
   white-space: nowrap;
 }
 
-.session-tree-time,
-.layout-classic .session-tree-detail {
+.layout-classic .session-tree-time, .layout-classic .session-tree-detail {
   flex: none;
   font-variant-numeric: tabular-nums;
 }
@@ -338,25 +301,17 @@
   color: var(--text-dim);
 }
 
-.session-tree .session-tree-action:hover,
-.layout-classic .session-tree .session-tree-action.is-active {
+.layout-classic .session-tree .session-tree-action:hover, .layout-classic .session-tree .session-tree-action.is-active {
   background: var(--bg-selected);
   color: var(--text);
 }
 
-.session-tree .session-tree-session.is-selected .session-tree-action:hover,
-.layout-classic .session-tree .session-tree-session.is-selected .session-tree-action.is-active {
+.layout-classic .session-tree .session-tree-session.is-selected .session-tree-action:hover, .layout-classic .session-tree .session-tree-session.is-selected .session-tree-action.is-active {
   background: var(--bg-hover);
-}
-
-/* Desktop: ⋯ (and archive) on hover; ⋯ alone on the selected row or while its menu is open. */
-.session-tree-session:hover .session-tree-action,
-.session-tree-session.is-selected .session-tree-more-action,
-.layout-classic .session-tree-session.is-menu-open .session-tree-more-action {
+}/* Desktop: ⋯ (and archive) on hover; ⋯ alone on the selected row or while its menu is open. */
+.layout-classic .session-tree-session:hover .session-tree-action, .layout-classic .session-tree-session.is-selected .session-tree-more-action, .layout-classic .session-tree-session.is-menu-open .session-tree-more-action {
   display: flex;
-}
-
-/*
+}/*
  * Keyboard focus shows them too. Only :focus-visible: Chrome focuses a
  * clicked button, and :focus-within would keep a clicked row's actions up
  * after the pointer leaves. Each :has() rule stands alone so a browser
@@ -394,8 +349,7 @@
   white-space: nowrap;
 }
 
-.session-tree .session-tree-confirm-delete,
-.layout-classic .session-tree .session-tree-confirm-cancel {
+.layout-classic .session-tree .session-tree-confirm-delete, .layout-classic .session-tree .session-tree-confirm-cancel {
   display: flex;
   flex: none;
   align-items: center;
@@ -424,9 +378,7 @@
 
 .layout-classic .session-tree .session-tree-confirm-cancel:hover {
   background: var(--bg-hover);
-}
-
-/* Project group header: the name with its chevron after it, the toggle fills
+}/* Project group header: the name with its chevron after it, the toggle fills
    the row; "+" and ⋯ replace the summary on hover. Same inset box as rows.
    It can be dragged (hooks/useGroupDrag.ts): a long-press on a phone must
    not select its text or open the iOS callout. touch-action stays as it is,
@@ -444,20 +396,14 @@
 
 .layout-classic .session-tree-group:hover {
   background: var(--bg-hover);
-}
-
-/* The project's name field (its menu's Rename…) in place of the header. */
+}/* The project's name field (its menu's Rename…) in place of the header. */
 .layout-classic .session-tree-group.is-renaming {
   padding-left: 4px;
-}
-
-/* Picked up by a long-press, before the finger moves. */
+}/* Picked up by a long-press, before the finger moves. */
 .layout-classic .session-tree-group.is-drag-armed {
   background: var(--bg-selected);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-}
-
-/* While a group is dragged: its block dimmed in place, the drop line in the
+}/* While a group is dragged: its block dimmed in place, the drop line in the
    middle of a spacer row, and a ghost with the project's name next to the
    pointer, placed clear of the line (hooks/useGroupDrag.ts). */
 .layout-classic .session-tree-drag-source {
@@ -478,9 +424,7 @@
   border-radius: 1px;
   background: var(--accent);
   pointer-events: none;
-}
-
-/* A dot at the line's left end marks it as the insertion point. */
+}/* A dot at the line's left end marks it as the insertion point. */
 .layout-classic .session-tree-drop-line::before {
   content: "";
   position: absolute;
@@ -490,9 +434,7 @@
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
-}
-
-/* A one-line pill, shorter than a header, so it fits above or below the
+}/* A one-line pill, shorter than a header, so it fits above or below the
    pointer and the line without covering either. Outside the scroll box. */
 .layout-classic .session-tree-drag-ghost {
   position: absolute;
@@ -539,8 +481,7 @@
   white-space: nowrap;
 }
 
-.session-tree-group.is-current .session-tree-group-toggle,
-.layout-classic .session-tree-group:hover .session-tree-group-toggle {
+.layout-classic .session-tree-group.is-current .session-tree-group-toggle, .layout-classic .session-tree-group:hover .session-tree-group-toggle {
   color: var(--text);
 }
 
@@ -567,8 +508,7 @@
   font-weight: 400;
 }
 
-.session-tree-summary-running,
-.layout-classic .session-tree-summary-unread {
+.layout-classic .session-tree-summary-running, .layout-classic .session-tree-summary-unread {
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -593,13 +533,11 @@
   gap: 2px;
 }
 
-.session-tree-group:hover .session-tree-group-actions,
-.layout-classic .session-tree-group.is-active .session-tree-group-actions {
+.layout-classic .session-tree-group:hover .session-tree-group-actions, .layout-classic .session-tree-group.is-active .session-tree-group-actions {
   display: flex;
 }
 
-.session-tree-group:hover .session-tree-summary,
-.layout-classic .session-tree-group.is-active .session-tree-summary {
+.layout-classic .session-tree-group:hover .session-tree-summary, .layout-classic .session-tree-group.is-active .session-tree-summary {
   display: none;
 }
 
@@ -612,8 +550,7 @@
 }
 
 @supports not selector(:has(*)) {
-  .session-tree-session:focus-within .session-tree-action,
-  .layout-classic .session-tree-group:focus-within .session-tree-group-actions {
+  .layout-classic .session-tree-session:focus-within .session-tree-action, .layout-classic .session-tree-group:focus-within .session-tree-group-actions {
     display: flex;
   }
 
@@ -638,21 +575,15 @@
   color: var(--text-dim);
 }
 
-.session-tree .session-tree-group-action:hover,
-.layout-classic .session-tree .session-tree-group-action.is-active {
+.layout-classic .session-tree .session-tree-group-action:hover, .layout-classic .session-tree .session-tree-group-action.is-active {
   background: var(--bg-selected);
   color: var(--text);
-}
-
-/* Lined up with the session titles. */
-.session-tree-group-empty,
-.layout-classic .session-tree-more {
+}/* Lined up with the session titles. */
+.layout-classic .session-tree-group-empty, .layout-classic .session-tree-more {
   padding-left: 16px;
   color: var(--text-dim);
   font-size: 11px;
-}
-
-/* "Show more · N" and, once more is shown, "Show less" side by side. A lone
+}/* "Show more · N" and, once more is shown, "Show less" side by side. A lone
    button takes the whole row; on a narrow sidebar "show more" gives way so
    "Show less" is never clipped. */
 .layout-classic .session-tree-more-toggle {
@@ -678,9 +609,7 @@
 
 .layout-classic .session-tree-more-toggle:hover {
   color: var(--text);
-}
-
-/* Footer links: open another project, the archive. */
+}/* Footer links: open another project, the archive. */
 .layout-classic .session-tree-footer {
   right: var(--session-tree-inset-right);
   left: var(--session-tree-inset-left);
@@ -715,9 +644,7 @@
 
 .layout-classic .session-tree-footer-chevron {
   flex: none;
-}
-
-/* Archive view: one label per project above its archived sessions. */
+}/* Archive view: one label per project above its archived sessions. */
 .layout-classic .session-tree-archive-group {
   align-items: flex-end;
   gap: 4px;
@@ -735,9 +662,7 @@
 
 .layout-classic .session-tree-archive-group-count {
   flex: none;
-}
-
-/* Phone layout: tall rows, ⋯ and the group buttons always shown, no archive quick button. */
+}/* Phone layout: tall rows, ⋯ and the group buttons always shown, no archive quick button. */
 .layout-classic .session-tree.is-mobile .session-tree-more-action {
   display: flex;
   width: 32px;
@@ -755,19 +680,14 @@
 .layout-classic .session-tree.is-mobile .session-tree-group-action {
   width: 32px;
   height: 32px;
-}
-
-/* Inputs are forced to 16px on phones (globals.css), so the field gets taller. */
+}/* Inputs are forced to 16px on phones (globals.css), so the field gets taller. */
 .layout-classic .session-tree.is-mobile .session-tree-rename {
   height: 32px;
 }
 
-.session-tree.is-mobile .session-tree-confirm-delete,
-.layout-classic .session-tree.is-mobile .session-tree-confirm-cancel {
+.layout-classic .session-tree.is-mobile .session-tree-confirm-delete, .layout-classic .session-tree.is-mobile .session-tree-confirm-cancel {
   height: 32px;
-}
-
-/* Touch screens wider than a phone have no hover: keep ⋯ reachable. */
+}/* Touch screens wider than a phone have no hover: keep ⋯ reachable. */
 @media (hover: none) {
   .layout-classic .session-tree-more-action {
     display: flex;
@@ -782,9 +702,7 @@
   .layout-classic .session-tree-chevron {
     transition: none;
   }
-}
-
-/*
+}/*
  * Sidebar shell (components/SessionSidebar.tsx): header, the Sessions | Files
  * tabs and their panels. Both panels stay mounted; the inactive one has the
  * hidden attribute (display: none from the base styles). The root is the
@@ -797,41 +715,40 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
-}
-
-/* While the undo toast is up, the last rows can still scroll out from under it. */
+}/* While the undo toast is up, the last rows can still scroll out from under it. */
 .session-sidebar.layout-classic.has-toast .session-tree-scroll {
   padding-bottom: 56px;
-}
-
-/* The header block, as the classic sidebar had it: the wordmark with New and
+}/* The header block, as the classic sidebar had it: the wordmark with New and
    the search, the folder in use, and the search field, with one line under. */
 .layout-classic .sidebar-header {
   display: flex;
   flex: none;
   flex-direction: column;
-  padding: 12px 10px 10px;
-  border-bottom: 1px solid var(--border);
+  height: auto;
+  padding: 0;
+  border-bottom: 0;
 }
 
 .layout-classic .sidebar-brand-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
+  align-items: stretch;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .layout-classic .sidebar-header-actions {
   display: flex;
   flex: none;
-  gap: 6px;
-}
-
-/* The wordmark: a monospace button that scrambles to the versions on click. */
+  align-items: stretch;
+  margin-left: auto;
+}/* The wordmark: a monospace button that scrambles to the versions on click. */
 .layout-classic .sidebar-brand {
+  align-self: center;
   min-width: 6ch;
-  padding: 0;
+  margin: 0 0 0 7px;
+  padding: 2px 4px;
   border: 0;
   background: none;
   color: var(--text);
@@ -844,61 +761,58 @@
   cursor: default;
 }
 
-.sidebar-new-button,
-.layout-classic .sidebar-search-toggle {
+.layout-classic .sidebar-new-button, .layout-classic .sidebar-search-toggle {
   display: flex;
   flex: none;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  height: 32px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--bg-hover);
+  gap: 6px;
+  height: auto;
+  padding: 0 12px;
+  border: 0;
+  border-top: 2px solid transparent;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
   color: var(--text-muted);
   font-size: 12px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
   white-space: nowrap;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  transition: background 0.12s, color 0.12s;
 }
 
 .layout-classic .sidebar-new-button {
-  padding: 0 12px 0 10px;
+  margin-left: -1px;
+  font-weight: 500;
 }
 
 .layout-classic .sidebar-search-toggle {
-  width: 32px;
+  width: 36px;
   padding: 0;
 }
 
-.sidebar-new-button:not(:disabled):hover,
-.layout-classic .sidebar-search-toggle:hover {
-  background: var(--bg-selected);
-  color: var(--accent);
+.layout-classic .sidebar-new-button:not(:disabled):hover, .layout-classic .sidebar-search-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text);
 }
 
 .layout-classic .sidebar-search-toggle.is-active {
+  border-top-color: var(--accent);
   background: var(--bg-selected);
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--text);
 }
 
 .layout-classic .sidebar-new-button:disabled {
   color: var(--text-dim);
   cursor: not-allowed;
-}
-
-/* Where the labels do not fit (useHeaderFit measures them): New keeps its +. */
-.sidebar-header[data-fit="1"] .sidebar-new-button,
-.layout-classic .sidebar-header[data-fit="2"] .sidebar-new-button {
-  width: 32px;
+}/* Where the labels do not fit (useHeaderFit measures them): New keeps its +. */
+.layout-classic .sidebar-header[data-fit="1"] .sidebar-new-button, .layout-classic .sidebar-header[data-fit="2"] .sidebar-new-button {
+  width: 36px;
   padding: 0;
 }
 
-.sidebar-header[data-fit="1"] .sidebar-new-label,
-.layout-classic .sidebar-header[data-fit="2"] .sidebar-new-label {
+.layout-classic .sidebar-header[data-fit="1"] .sidebar-new-label, .layout-classic .sidebar-header[data-fit="2"] .sidebar-new-label {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -907,10 +821,7 @@
   white-space: nowrap;
 }
 
-.sidebar-new-button:focus-visible,
-.sidebar-search-toggle:focus-visible,
-.sidebar-archive-back:focus-visible,
-.layout-classic .sidebar-tool-button:focus-visible {
+.layout-classic .sidebar-new-button:focus-visible, .layout-classic .sidebar-search-toggle:focus-visible, .layout-classic .sidebar-archive-back:focus-visible, .layout-classic .sidebar-tool-button:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
@@ -922,16 +833,13 @@
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-}
-
-/* The folder in use, inside the header block. */
+}/* The folder in use, inside the header block. */
 .layout-classic .sidebar-project-bar {
   display: flex;
   flex: none;
   flex-direction: column;
-}
-
-/* The session list and the explorer share the sidebar's height, as the
+  padding: 10px 10px 0;
+}/* The session list and the explorer share the sidebar's height, as the
    classic split did; the sessions take the remaining room while the explorer
    is folded. */
 .layout-classic .sidebar-sessions-panel {
@@ -949,9 +857,7 @@
 .layout-classic .sidebar-explorer.is-collapsed {
   flex: 0 0 auto;
   min-height: 0;
-}
-
-/* The draggable boundary between the session list and the explorer, as the
+}/* The draggable boundary between the session list and the explorer, as the
    classic sidebar had it (hooks/useResizablePanel.ts). */
 .layout-classic .sidebar-section-resize-handle {
   position: relative;
@@ -976,8 +882,7 @@
   transition: opacity 0.12s;
 }
 
-.sidebar-section-resize-handle:hover::after,
-.layout-classic .sidebar-section-resize-handle.is-resizing::after {
+.layout-classic .sidebar-section-resize-handle:hover::after, .layout-classic .sidebar-section-resize-handle.is-resizing::after {
   background: var(--accent);
   opacity: 1;
 }
@@ -1024,9 +929,7 @@
 
 .layout-classic .sidebar-explorer-label {
   white-space: nowrap;
-}
-
-/* The archive entry: a bar at the sidebar's own bottom, its label lined up
+}/* The archive entry: a bar at the sidebar's own bottom, its label lined up
    with the session titles (the card's 2px border + 14px padding). */
 .layout-classic .sidebar-archived-bar {
   display: flex;
@@ -1066,10 +969,10 @@
 
 .layout-classic .sidebar-search-input {
   display: block;
-  width: 100%;
+  width: calc(100% - 20px);
   min-width: 0;
   height: 29px;
-  margin-top: 6px;
+  margin: 8px 10px 10px;
   padding: 0 10px;
   box-sizing: border-box;
   border: 1px solid var(--border);
@@ -1082,9 +985,7 @@
 
 .layout-classic .sidebar-search-input:focus {
   outline: 2px solid var(--accent);
-}
-
-/* The tree (or the archive) under the search: SessionTree fills it. */
+}/* The tree (or the archive) under the search: SessionTree fills it. */
 .layout-classic .sidebar-sessions-view {
   display: flex;
   flex: 1 1 auto;
@@ -1138,9 +1039,7 @@
 
 .layout-classic .sidebar-icon-up {
   transform: rotate(-90deg);
-}
-
-/* Files tab: the folder in use (the stacked project picker's two boxes,
+}/* Files tab: the folder in use (the stacked project picker's two boxes,
    app/globals.css) and what is done with it, then a line and the tree. */
 .layout-classic .sidebar-files-head {
   display: flex;
@@ -1148,9 +1047,7 @@
   flex-direction: column;
   padding: 10px 10px 4px;
   border-bottom: 1px solid var(--border);
-}
-
-/* The head's row: the folder's actions and the file search, then the tree's
+}/* The head's row: the folder's actions and the file search, then the tree's
    two views (ignored files, changes) at the right end. Always the same
    buttons (the changes view is disabled, not gone, without changes), so
    nothing moves as the count flips. */
@@ -1159,9 +1056,7 @@
   align-items: center;
   gap: 2px;
   margin-left: auto;
-}
-
-/* Square keys, borderless and dim: their box shows on hover. */
+}/* Square keys, borderless and dim: their box shows on hover. */
 .layout-classic .sidebar-tool-button {
   display: flex;
   flex: 0 1 26px;
@@ -1183,14 +1078,12 @@
   color: var(--text);
 }
 
-.sidebar-tool-button.is-active,
-.layout-classic .sidebar-tool-button.is-active:not(:disabled):hover {
+.layout-classic .sidebar-tool-button.is-active, .layout-classic .sidebar-tool-button.is-active:not(:disabled):hover {
   background: var(--bg-selected);
   color: var(--accent);
 }
 
-.sidebar-tool-button.is-done,
-.layout-classic .sidebar-tool-button.is-done:not(:disabled):hover {
+.layout-classic .sidebar-tool-button.is-done, .layout-classic .sidebar-tool-button.is-done:not(:disabled):hover {
   background: transparent;
   color: var(--accent);
 }
@@ -1198,9 +1091,7 @@
 .layout-classic .sidebar-tool-button:disabled {
   cursor: default;
   opacity: 0.6;
-}
-
-/* Under the head's line, on the boxes' edges. */
+}/* Under the head's line, on the boxes' edges. */
 .layout-classic .sidebar-files-error {
   display: flex;
   flex: none;
@@ -1216,9 +1107,7 @@
   flex: 1;
   min-width: 0;
   overflow-wrap: anywhere;
-}
-
-/* The tree's first row as far under the head's line as the keys' icons are
+}/* The tree's first row as far under the head's line as the keys' icons are
    above it (with the tree's own 2px). */
 .layout-classic .sidebar-files-scroll {
   flex: 1 1 auto;
@@ -1228,8 +1117,7 @@
   overflow-y: auto;
 }
 
-@media (pointer: coarse) {
-  /* As tall as the picker's boxes there, still square. */
+@media (pointer: coarse) {/* As tall as the picker's boxes there, still square. */
   .layout-classic .sidebar-tool-button {
     flex-basis: 36px;
     height: 36px;
@@ -1237,15 +1125,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sidebar-tab,
-  .sidebar-new-button,
-  .sidebar-search-toggle,
-  .layout-classic .sidebar-tool-button {
+  .layout-classic .sidebar-tab, .layout-classic .sidebar-new-button, .layout-classic .sidebar-search-toggle, .layout-classic .sidebar-tool-button {
     transition: none;
   }
-}
-
-/* A run parked on an extension's dialog: warning amber, the unread dot's shape
+}/* A run parked on an extension's dialog: warning amber, the unread dot's shape
    (ported from the new layout's sidebar.css; the keyframes live there). */
 .layout-classic .session-tree-awaiting {
   position: relative;
@@ -1264,9 +1147,22 @@
   border-radius: 50%;
   opacity: 0.35;
   animation: session-tree-status-pulse 1.6s ease-in-out infinite;
+}/* A saved session's main control is a link (middle-click, Ctrl/Cmd-click open
+   it in a new tab): it looks exactly like the button it replaced. */
+.layout-classic a.session-tree-main {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-/* The archive bar's own menu (Restore all, Delete all…), at the bar's end. */
+.layout-classic .session-tree a.session-tree-main:focus {
+  outline: none;
+}
+
+.layout-classic .session-tree a.session-tree-main:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}/* The archive bar's own menu (Restore all, Delete all…), at the bar's end. */
 .layout-classic .sidebar-archive-menu {
   display: flex;
   align-items: center;
@@ -1283,8 +1179,7 @@
   cursor: pointer;
 }
 
-.layout-classic .sidebar-archive-menu:hover,
-.layout-classic .sidebar-archive-menu[aria-expanded="true"] {
+.layout-classic .sidebar-archive-menu:hover, .layout-classic .sidebar-archive-menu[aria-expanded="true"] {
   background: var(--bg-hover);
   color: var(--text);
 }

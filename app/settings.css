@@ -224,6 +224,15 @@
   padding-left: 26px;
 }
 
+/* The custom provider row's fold chevron. */
+.models-sidebar-chevron {
+  transition: transform 0.15s;
+}
+
+.models-sidebar-chevron.is-open {
+  transform: rotate(90deg);
+}
+
 .models-sidebar-add-item {
   color: var(--text-dim);
 }

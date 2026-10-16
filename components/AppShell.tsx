@@ -4,6 +4,8 @@ import { useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } fr
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGlobalKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { SessionSidebar, type SelectSessionOptions, type SessionSidebarControl } from "./SessionSidebar";
+import { SessionSidebarClassic } from "./SessionSidebarClassic";
+import { useFilesPlacement } from "@/hooks/useFilesPlacement";
 import { ChatWindow } from "./ChatWindow";
 import { NewSessionContextBar, type NewSessionContextControl } from "./NewSessionContextBar";
 import type { ChatScrollPosition } from "@/lib/chat-scroll-position";
@@ -110,6 +112,9 @@ export function AppShell() {
   const { locale, t: translate } = useI18n();
   const isMobile = useIsMobile();
   const isNarrowMobile = useIsNarrowMobile();
+  // The classic shell is desktop-only; phones keep the tabs layout.
+  const filesPlacement = useFilesPlacement();
+  const SidebarComponent = filesPlacement === "classic" && !isMobile ? SessionSidebarClassic : SessionSidebar;
   useViewportHeight();
 
   // Once the user has granted notification permission, register a Web Push
@@ -1416,7 +1421,7 @@ export function AppShell() {
 
   const sidebarContent = (
     <>
-      <SessionSidebar
+      <SidebarComponent
         selectedSessionId={selectedSession?.id ?? null}
         onSelectSession={handleSelectSession}
         onNewSession={handleNewSession}

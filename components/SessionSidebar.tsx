@@ -559,7 +559,10 @@ export function SessionSidebar({ selectedSessionId, onSelectSession, onNewSessio
   // browser storage after hydration; the layout's choice is read the same
   // way (useFilesPlacement's server snapshot).
   const filesPlacement = useFilesPlacement();
-  const stacked = !isMobile && filesPlacement === "below";
+  // This component serves the "below"/"tab" layouts; the classic shell is
+  // SessionSidebarClassic (AppShell picks between them). Anything but an
+  // explicit "tab" is the stacked (below) arrangement.
+  const stacked = !isMobile && filesPlacement !== "tab";
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("sessions");
   const [filesCollapsed, setFilesCollapsed] = useState(false);
   const sessionsTabRef = useRef<HTMLButtonElement>(null);

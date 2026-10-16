@@ -396,6 +396,17 @@ function GeneralSettings({ sessionId, onSessionReloaded, quoteSelectionEnabled, 
                 <input
                   type="radio"
                   name="files-placement"
+                  value="classic"
+                  checked={filesPlacement === "classic"}
+                  onChange={() => setFilesPlacement("classic")}
+                  className="sr-only"
+                />
+                <span className="settings-send-mode-label">{t("settings.filesPlacementClassic")}</span>
+              </label>
+              <label className="settings-send-mode-option">
+                <input
+                  type="radio"
+                  name="files-placement"
                   value="below"
                   checked={filesPlacement === "below"}
                   onChange={() => setFilesPlacement("below")}

@@ -1,13 +1,14 @@
 import { useSyncExternalStore } from "react";
 
-/** Where the desktop sidebar shows the file browser: under the sessions, or behind its own tab. Phones always use tabs. */
-export type FilesPlacement = "below" | "tab";
+/** Where the desktop sidebar shows the file browser: under the sessions, behind its own tab, or the classic single-project shell. Phones always use tabs. */
+export type FilesPlacement = "classic" | "below" | "tab";
 
 export const FILES_PLACEMENT_STORAGE_KEY = "pi-web:sidebar-files-placement";
-export const FILES_PLACEMENT_DEFAULT: FilesPlacement = "below";
+export const FILES_PLACEMENT_DEFAULT: FilesPlacement = "classic";
 
 export function parseFilesPlacement(raw: string | null): FilesPlacement {
-  return raw === "tab" ? "tab" : FILES_PLACEMENT_DEFAULT;
+  if (raw === "tab" || raw === "below") return raw;
+  return FILES_PLACEMENT_DEFAULT;
 }
 
 function readStoredPlacement(): FilesPlacement {

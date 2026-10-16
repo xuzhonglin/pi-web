@@ -142,11 +142,12 @@
    the time (or the running/unread marker), the message count and the worktree
    branch. Rows run the full width, a left accent bar marks the selection, and
    the actions take a column at the right on hover. */
-.layout-classic .session-tree-session {
-  right: 0;
+.layout-classic .session-tree-session {/* The card reaches the sidebar's edges: it runs under the classic scrollbar
+     (right taken from --session-tree-scrollbar) and its content keeps clear. */
+  right: calc(-1 * var(--session-tree-scrollbar, 0px));
   left: 0;
   gap: 2px;
-  padding: 0 6px 0 14px;
+  padding: 0 calc(6px + var(--session-tree-scrollbar, 0px)) 0 14px;
   border-left: 2px solid transparent;
   border-radius: 0;
   cursor: pointer;
@@ -159,7 +160,18 @@
 
 .layout-classic .session-tree-session.is-selected {
   background: var(--bg-selected);
-  border-left-color: var(--accent);
+}/* The selected card's mark: one 3px accent bar, clear of the card's top and
+   bottom (the new layout's). The classic border-left is left transparent so
+   the two do not stack into a second line. */
+.layout-classic .session-tree-session.is-selected:not(.is-confirming)::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
 }
 
 .layout-classic .session-tree-session.is-confirming {
@@ -844,6 +856,7 @@
    is folded. */
 .layout-classic .sidebar-sessions-panel {
   flex: 1 1 0;
+  padding-top: 10px;
 }
 
 .layout-classic .sidebar-explorer {
@@ -969,10 +982,11 @@
 
 .layout-classic .sidebar-search-input {
   display: block;
+  flex: none;
   width: calc(100% - 20px);
   min-width: 0;
   height: 29px;
-  margin: 8px 10px 10px;
+  margin: 6px 10px 0;
   padding: 0 10px;
   box-sizing: border-box;
   border: 1px solid var(--border);

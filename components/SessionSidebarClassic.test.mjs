@@ -138,7 +138,7 @@ test("one sidebar: the wordmark, New, search, the folder, the sessions and the e
   assert.match(html, /<div class="sidebar-project-bar"><div class="project-picker is-stacked" role="group" aria-label="Project and worktree">/);
   // The sessions panel holds the tree (or the archive); the explorer follows.
   assert.match(html, /<div id="session-sidebar-panel-sessions" class="sidebar-panel sidebar-sessions-panel" style="flex:0 1 var\(--sidebar-session-pane-height, 320px\)">/);
-  assert.match(html, /<div class="sidebar-explorer"><div class="sidebar-explorer-head"><button type="button" class="sidebar-explorer-toggle" aria-expanded="true"><svg[^>]*class="sidebar-explorer-chevron is-open"[^>]*>[\s\S]*?<\/svg><span class="sidebar-explorer-label">File explorer<\/span>/);
+  assert.match(html, /<div class="sidebar-explorer"><div class="sidebar-explorer-head"><button type="button" class="sidebar-explorer-toggle" aria-expanded="true"><svg[^>]*class="sidebar-explorer-chevron is-open"[^>]*>[\s\S]*?<\/svg><span class="sidebar-explorer-label">Files<\/span>/);
   assert.match(html, /<div class="sidebar-files-scroll scrollbar-subtle">/);
   // Pins and archive not loaded yet: the tree waits instead of flashing archived rows.
   assert.match(html, /<div class="session-tree-message">Loading\.\.\.<\/div>/);
@@ -169,7 +169,7 @@ test("the explorer head holds the fold toggle and the folder's buttons, always t
   const panel = html.slice(html.indexOf('class="sidebar-explorer"'));
   const head = panel.slice(panel.indexOf('<div class="sidebar-explorer-head">'), panel.indexOf('<div class="sidebar-files-scroll'));
   // The fold chevron and label, then the folder's actions at the right.
-  assert.match(head, /^<div class="sidebar-explorer-head"><button type="button" class="sidebar-explorer-toggle" aria-expanded="true"><svg[^>]*class="sidebar-explorer-chevron is-open"[^>]*>[\s\S]*?<\/svg><span class="sidebar-explorer-label">File explorer<\/span><\/button>/);
+  assert.match(head, /^<div class="sidebar-explorer-head"><button type="button" class="sidebar-explorer-toggle" aria-expanded="true"><svg[^>]*class="sidebar-explorer-chevron is-open"[^>]*>[\s\S]*?<\/svg><span class="sidebar-explorer-label">Files<\/span><\/button>/);
   const pickerEnd = head.indexOf('<div class="sidebar-files-actions"');
   assert.ok(pickerEnd > 0);
   assert.match(head.slice(pickerEnd), /^<div class="sidebar-files-actions" role="group" aria-label="File actions">/);
@@ -246,7 +246,7 @@ test("the header block is the classic one, and gives up the New label only where
   assert.match(sidebarStyles, /\.sidebar-search-toggle \{\s*width: 36px;\s*padding: 0;\s*\}/);
   assert.match(sidebarStyles, /\.sidebar-search-toggle\.is-active \{\s*border-top-color: var\(--accent\);\s*background: var\(--bg-selected\);\s*color: var\(--text\);\s*\}/);
   // The search field sits under the folder, in the header block.
-  assert.match(sidebarStyles, /\.sidebar-search-input \{[^}]*margin: 8px 10px 10px;/);
+  assert.match(sidebarStyles, /\.sidebar-search-input \{[^}]*margin: 6px 10px 0;/);
   // Measured, since the label's width changes with the language: New keeps its +.
   const fit = between("function useHeaderFit(", "\nfunction buttonAnchor(");
   assert.match(fit, /useLayoutEffect\(\(\) => \{/);

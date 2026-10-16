@@ -378,7 +378,7 @@ export const zhCNLocale: LocalePlugin = {
     "sidebar.resizeFiles": "调整文件浏览器高度",
     "sidebar.resizeFilesHint": "拖动调整高度。双击或按 Enter 恢复默认值。",
     "sidebar.fileActions": "文件操作",
-    "sidebar.explorer": "文件浏览器",
+    "sidebar.explorer": "文件",
     "sidebar.collapseOtherGroups": "折叠其他项目",
     "sidebar.expandAllGroups": "展开全部项目",
     "sidebar.collapseAllGroups": "折叠全部项目",

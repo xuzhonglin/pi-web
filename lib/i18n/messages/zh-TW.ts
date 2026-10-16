@@ -378,7 +378,7 @@ export const zhTWLocale: LocalePlugin = {
     "sidebar.resizeFiles": "調整檔案瀏覽器高度",
     "sidebar.resizeFilesHint": "拖曳以調整高度。按兩下或按 Enter 鍵即可重設。",
     "sidebar.fileActions": "檔案操作",
-    "sidebar.explorer": "檔案瀏覽器",
+    "sidebar.explorer": "檔案",
     "sidebar.collapseOtherGroups": "摺疊其他專案",
     "sidebar.expandAllGroups": "展開全部專案",
     "sidebar.collapseAllGroups": "收合全部專案",

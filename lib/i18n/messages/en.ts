@@ -378,7 +378,7 @@ export const enLocale: LocalePlugin = {
     "sidebar.resizeFiles": "Resize file browser",
     "sidebar.resizeFilesHint": "Drag to resize. Double-click or press Enter to reset.",
     "sidebar.fileActions": "File actions",
-    "sidebar.explorer": "File explorer",
+    "sidebar.explorer": "Files",
     "sidebar.collapseOtherGroups": "Collapse other projects",
     "sidebar.expandAllGroups": "Expand all projects",
     "sidebar.collapseAllGroups": "Collapse all projects",

@@ -513,10 +513,13 @@ test("row CSS stays flat, themed and quiet", () => {
   // No reserved scrollbar gutter: a selected card reaches the right edge.
   assert.doesNotMatch(cssRule(".session-tree-scroll"), /scrollbar-gutter/);
   assert.doesNotMatch(css, /@supports not \(scrollbar-gutter: stable\)/);
-  assert.match(cssRule(".session-tree-session"), /right: 0;\s*left: 0;[\s\S]*?border-left: 2px solid transparent;\s*border-radius: 0;/);
+  assert.match(cssRule(".session-tree-session"), /right: calc\(-1 \* var\(--session-tree-scrollbar, 0px\)\);\s*left: 0;[\s\S]*?border-left: 2px solid transparent;\s*border-radius: 0;/);
   assert.match(cssRule(".session-tree-main"), /flex-direction: column;/);
   assert.match(cssRule(".session-tree-sub"), /display: flex;\s*align-items: center;[\s\S]*?color: var\(--text-dim\);\s*font-size: 11px;/);
-  assert.match(cssRule(".session-tree-session.is-selected"), /background: var\(--bg-selected\);\s*border-left-color: var\(--accent\);/);
+  assert.match(cssRule(".session-tree-session.is-selected"), /background: var\(--bg-selected\);/);
+  // One seat bar, clear of the card's top and bottom (the classic border-left
+  // stays transparent so it is not a second one).
+  assert.match(css, /\.session-tree-session\.is-selected:not\(\.is-confirming\)::before \{[^}]*top: 9px;[^}]*width: 3px;[^}]*background: var\(--accent\);/);
   // The title takes the full text color and the second line the dim one, as
   // 0.10's two-line item did: primary and secondary read apart.
   assert.match(cssRule(".session-tree-title"), /color: var\(--text\);/);

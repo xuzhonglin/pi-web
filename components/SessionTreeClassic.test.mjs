@@ -180,7 +180,7 @@ test("an idle session row shows its short time, branch and both actions", () => 
   const html = rowMarkup(render({ rows: [sessionRow(root)] }), "session:group:idle");
   assert.match(html, /^<div class="session-tree-row session-tree-session" style="top:0;height:54px" data-row-key="session:group:idle">/);
   // The classic two-line card: the title, then the time, count and branch.
-  assert.match(html, /<button type="button" class="session-tree-main" title="[^"]*"><span class="session-tree-title">first idle<\/span><span class="session-tree-sub"><span class="session-tree-time">5m<\/span><span class="session-tree-detail">3 msgs<\/span><span class="session-tree-branch">⑂ feat\/rows<\/span><\/span><\/button>/);
+  assert.match(html, /<a class="session-tree-main" href="\?session=idle" title="[^"]*"><span class="session-tree-title">first idle<\/span><span class="session-tree-sub"><span class="session-tree-time">5m<\/span><span class="session-tree-detail">3 msgs<\/span><span class="session-tree-branch">⑂ feat\/rows<\/span><\/span><\/a>/);
   assert.match(html, /title="first idle\n3 msgs · 5 minutes ago · ⑂ feat\/rows"/);
   assert.match(html, /class="session-tree-action session-tree-quick-action" aria-label="Archive" title="Archive"/);
   assert.match(html, /class="session-tree-action session-tree-more-action" aria-label="More actions" title="More actions" aria-haspopup="menu" aria-expanded="false"/);
@@ -233,7 +233,7 @@ test("the selected row is marked and its menu button reports an open menu", () =
   const row = sessionRow(session("sel"), { status: { selected: true } });
   const html = rowMarkup(render({ rows: [row], activeMenuRowKey: row.key }), row.key);
   assert.match(html, /class="session-tree-row session-tree-session is-selected is-menu-open"/);
-  assert.match(html, /<button type="button" class="session-tree-main" title="[^"]*" aria-current="true">/);
+  assert.match(html, /<a class="session-tree-main" href="\?session=sel" title="[^"]*" aria-current="true">/);
   assert.match(html, /class="session-tree-action session-tree-more-action is-active"[^>]*aria-expanded="true"/);
 });
 

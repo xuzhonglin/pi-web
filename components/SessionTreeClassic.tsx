@@ -16,6 +16,7 @@ import {
 } from "react";
 import type { SessionFamily } from "@/lib/session-family";
 import { splitForkSuffix } from "@/lib/session-fork-name";
+import { isPlainActivation, sessionDeepLink } from "@/lib/session-links";
 import { MAX_PROJECT_NAME_LENGTH, type ProjectMovePosition } from "@/lib/session-ui-state-shared";
 import {
   PINNED_MORE_KEY,
@@ -584,6 +585,23 @@ const SessionRowView = memo(function SessionRowView({
   // Archive (or restore) one click away: desktop only, never for a running
   // family, which would come straight back.
   const quickAction = layout === "desktop" && (context === "archive" || !status.running);
+  const mainContent = (
+    <>
+      {forkTitle ? (
+        <span className="session-tree-title has-fork-suffix">
+          <span className="session-tree-title-base">{forkTitle.base}</span>
+          <span className="session-tree-title-suffix">{forkTitle.suffix}</span>
+        </span>
+      ) : (
+        <span className="session-tree-title">{title}</span>
+      )}
+      <span className="session-tree-sub">
+        {statusMark ?? <span className="session-tree-time">{when}</span>}
+        <span className="session-tree-detail">{details}</span>
+        {branch && <span className="session-tree-branch">⑂ {branch}</span>}
+      </span>
+    </>
+  );
 
   return (
     <div
@@ -593,21 +611,31 @@ const SessionRowView = memo(function SessionRowView({
       onClick={() => handlers.current.onSelectFamily(family)}
       onContextMenu={(event) => handlers.current.onRowContextMenu(row, event)}
     >
-      <button type="button" className="session-tree-main" title={tooltip} aria-current={status.selected ? "true" : undefined}>
-        {forkTitle ? (
-          <span className="session-tree-title has-fork-suffix">
-            <span className="session-tree-title-base">{forkTitle.base}</span>
-            <span className="session-tree-title-suffix">{forkTitle.suffix}</span>
-          </span>
-        ) : (
-          <span className="session-tree-title">{title}</span>
-        )}
-        <span className="session-tree-sub">
-          {statusMark ?? <span className="session-tree-time">{when}</span>}
-          <span className="session-tree-detail">{details}</span>
-          {branch && <span className="session-tree-branch">⑂ {branch}</span>}
-        </span>
-      </button>
+      {status.transient ? (
+        // No file yet: a link would open a session no other tab can load.
+        <button type="button" className="session-tree-main" title={tooltip} aria-current={status.selected ? "true" : undefined}>
+          {mainContent}
+        </button>
+      ) : (
+        // A real link, so middle-click, Ctrl/Cmd-click and the browser's own
+        // gestures open the session in another tab. A plain click (or Enter)
+        // stays here and selects it as before; never `target`.
+        <a
+          className="session-tree-main"
+          href={sessionDeepLink(root.id)}
+          title={tooltip}
+          aria-current={status.selected ? "true" : undefined}
+          onClick={(event) => {
+            // The row's handler must not select it again, nor on a modified click.
+            event.stopPropagation();
+            if (!isPlainActivation(event)) return;
+            event.preventDefault();
+            handlers.current.onSelectFamily(family);
+          }}
+        >
+          {mainContent}
+        </a>
+      )}
       {!status.transient && (
         <span className="session-tree-actions">
           {quickAction && (context === "archive" ? (

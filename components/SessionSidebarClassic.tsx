@@ -258,7 +258,10 @@ type SessionRow = Extract<SidebarRow, { kind: "session" }>;
 type SidebarMenuState =
   | { kind: "row"; row: SessionRow; anchor: SidebarMenuAnchor; opener: HTMLElement | null }
   | { kind: "group"; project: SidebarProject; olderCount: number; askDelete?: boolean; anchor: SidebarMenuAnchor; opener: HTMLElement }
-  | { kind: "archive"; anchor: SidebarMenuAnchor; opener: HTMLElement; askDelete?: boolean };
+  | { kind: "archive"; anchor: SidebarMenuAnchor; opener: HTMLElement; askDelete?: ArchiveDeleteScope };
+
+/** The archive menu's two Delete scopes: everything, or what is over 30 days old. */
+type ArchiveDeleteScope = "all" | "old";
 
 const UNREAD_SESSIONS_STORAGE_KEY = "pi-web:unread-session-ids";
 const LAST_CUSTOM_CWD_STORAGE_KEY = "pi-web:last-custom-cwd";
@@ -266,6 +269,8 @@ const RUNNING_SESSIONS_POLL_MS = 2500;
 const SESSION_DETAILS_HYDRATION_DELAY_MS = 750;
 /** "Archive sessions older than 7 days" in a project's menu. */
 const ARCHIVE_OLDER_THAN_MS = 7 * 24 * 60 * 60 * 1000;
+/** "Delete archived over 30 days ago…" in the archive menu. */
+const ARCHIVED_DELETE_AFTER_MS = 30 * 24 * 60 * 60 * 1000;
 const TOAST_TITLE_MAX = 28;
 
 /** The sessions/explorer split, as the classic sidebar had it. */
@@ -1291,18 +1296,13 @@ export function SessionSidebarClassic({ selectedSessionId, onSelectSession, onNe
     && selectedProject?.key === worktreeState.projectKey
   );
   const worktreeGuide = selectedCwd
-    && worktreeState
+    && worktreeState?.isGit
     && selectedProject?.key === worktreeState.projectKey
     && !showWorktreeSwitcher
-    ? (worktreeState.isGit
-        ? {
-             label: t("sidebar.openRepoRoot"),
-             title: t("sidebar.openRepoRootTitle"),
-          }
-        : {
-             label: t("sidebar.gitRepoRootOnly"),
-             title: t("sidebar.gitRepoRootOnlyTitle"),
-          })
+    ? {
+        label: t("sidebar.openRepoRoot"),
+        title: t("sidebar.openRepoRootTitle"),
+      }
     : null;
   const worktreeLoading = Boolean(selectedCwd && worktreeLoadingCwd === selectedCwd);
   const inactiveWorktreeSelector = worktreeGuide
@@ -2065,21 +2065,23 @@ export function SessionSidebarClassic({ selectedSessionId, onSelectSession, onNe
     ]);
   }, [applyUiState, currentProjectKey, showToast, snapshotUiState, t, treeSelectionInput]);
 
-  const archiveDeleteIds = useCallback((): string[] => archivedFamilyIds(
+  const archiveDeleteIds = useCallback((scope: ArchiveDeleteScope): string[] => archivedFamilyIds(
     treeSelectionInput,
-    currentProjectKey ? { projectKey: currentProjectKey } : {},
+    scope === "old"
+      ? { ...(currentProjectKey ? { projectKey: currentProjectKey } : {}), archivedBefore: Date.now() - ARCHIVED_DELETE_AFTER_MS }
+      : currentProjectKey ? { projectKey: currentProjectKey } : {},
   ), [currentProjectKey, treeSelectionInput]);
 
-  const deleteAllArchived = useCallback(() => {
-    const ids = archiveDeleteIds();
-    void deleteFamilyIds("archive:all", ids, () => selectedTabButton());
+  const deleteArchived = useCallback((scope: ArchiveDeleteScope) => {
+    const ids = archiveDeleteIds(scope);
+    void deleteFamilyIds(`archive:${scope}`, ids, () => selectedTabButton());
   }, [archiveDeleteIds, deleteFamilyIds, selectedTabButton]);
 
   const openArchiveMenu = useCallback((opener: HTMLElement) => {
     setMenu((current) => (current?.kind === "archive" ? null : { kind: "archive", anchor: buttonAnchor(opener, "end"), opener }));
   }, []);
 
-  const askArchiveDelete = useCallback((askDelete: boolean) => {
+  const askArchiveDelete = useCallback((askDelete: ArchiveDeleteScope | undefined) => {
     setMenu((current) => (current?.kind === "archive" ? { ...current, askDelete } : current));
   }, []);
 
@@ -2288,7 +2290,8 @@ export function SessionSidebarClassic({ selectedSessionId, onSelectSession, onNe
   let menuItems: SidebarMenuItem[] | undefined;
   let menuQuestion: ReactNode = null;
   const archiveMenuItems = (): SidebarMenuItem[] => {
-    const count = archiveDeleteIds().length;
+    const count = archiveDeleteIds("all").length;
+    const oldCount = archiveDeleteIds("old").length;
     return [
       {
         type: "item",
@@ -2300,6 +2303,18 @@ export function SessionSidebarClassic({ selectedSessionId, onSelectSession, onNe
       },
       {
         type: "item",
+        id: "delete-old",
+        label: t("sidebar.deleteOldArchived", { count: oldCount }),
+        icon: <TrashIcon />,
+        danger: true,
+        disabled: oldCount === 0,
+        onSelect: ({ keepOpen }) => {
+          keepOpen();
+          askArchiveDelete("old");
+        },
+      },
+      {
+        type: "item",
         id: "delete-all",
         label: t("sidebar.deleteAllArchived", { count }),
         icon: <TrashIcon />,
@@ -2307,17 +2322,19 @@ export function SessionSidebarClassic({ selectedSessionId, onSelectSession, onNe
         disabled: count === 0,
         onSelect: ({ keepOpen }) => {
           keepOpen();
-          askArchiveDelete(true);
+          askArchiveDelete("all");
         },
       },
     ];
   };
 
-  const archiveDeleteBody = (): ReactNode => {
-    const count = archiveDeleteIds().length;
+  const archiveDeleteBody = (scope: ArchiveDeleteScope): ReactNode => {
+    const count = archiveDeleteIds(scope).length;
     return (
       <div className="sidebar-menu-question">
-        <div className="sidebar-menu-header">{t("sidebar.deleteAllArchivedHeading")}</div>
+        <div className="sidebar-menu-header">
+          {t(scope === "old" ? "sidebar.deleteOldArchivedHeading" : "sidebar.deleteAllArchivedHeading")}
+        </div>
         <p className="sidebar-menu-question-text">{t("sidebar.deleteArchivedMessage")}</p>
         <div className="sidebar-menu-question-buttons">
           <button
@@ -2325,11 +2342,11 @@ export function SessionSidebarClassic({ selectedSessionId, onSelectSession, onNe
             className="sidebar-menu-question-confirm"
             data-sidebar-menu-autofocus=""
             disabled={count === 0}
-            onClick={deleteAllArchived}
+            onClick={() => deleteArchived(scope)}
           >
             {t("sidebar.deleteCount", { count })}
           </button>
-          <button type="button" className="sidebar-menu-question-cancel" onClick={() => askArchiveDelete(false)}>
+          <button type="button" className="sidebar-menu-question-cancel" onClick={() => askArchiveDelete(undefined)}>
             {t("sidebar.cancel")}
           </button>
         </div>
@@ -2355,7 +2372,7 @@ export function SessionSidebarClassic({ selectedSessionId, onSelectSession, onNe
   } else if (menu?.kind === "archive") {
     menuLabel = t("sidebar.archived");
     if (menu.askDelete) {
-      menuQuestion = archiveDeleteBody();
+      menuQuestion = archiveDeleteBody(menu.askDelete);
     } else {
       menuItems = archiveMenuItems();
     }

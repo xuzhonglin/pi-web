@@ -78,6 +78,23 @@
   outline-offset: -2px;
 }
 
+/* A saved session's main control is a link (middle-click, Ctrl/Cmd-click open
+   it in a new tab): it looks exactly like the button it replaced. */
+.layout-classic a.session-tree-main {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.layout-classic .session-tree a.session-tree-main:focus {
+  outline: none;
+}
+
+.layout-classic .session-tree a.session-tree-main:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 .layout-classic .session-tree-chevron {
   flex: none;
   color: var(--text-dim);

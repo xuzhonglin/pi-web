@@ -160,18 +160,11 @@
 
 .layout-classic .session-tree-session.is-selected {
   background: var(--bg-selected);
-}/* The selected card's mark: one 3px accent bar, clear of the card's top and
-   bottom (the new layout's). The classic border-left is left transparent so
-   the two do not stack into a second line. */
+  border-left-color: var(--accent);
+}/* The classic full-height border is the one selection mark; the new layout's
+   inset `::before` bar would be a second line beside it. */
 .layout-classic .session-tree-session.is-selected:not(.is-confirming)::before {
-  content: "";
-  position: absolute;
-  top: 9px;
-  bottom: 9px;
-  left: 0;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
-  background: var(--accent);
+  content: none;
 }
 
 .layout-classic .session-tree-session.is-confirming {
@@ -990,7 +983,7 @@
   padding: 0 10px;
   box-sizing: border-box;
   border: 1px solid var(--border);
-  border-radius: 7px;
+  border-radius: 8px;
   background: var(--bg);
   color: var(--text);
   font: inherit;
@@ -998,7 +991,7 @@
 }
 
 .layout-classic .sidebar-search-input:focus {
-  outline: 2px solid var(--accent);
+  outline: none;
 }/* The tree (or the archive) under the search: SessionTree fills it. */
 .layout-classic .sidebar-sessions-view {
   display: flex;

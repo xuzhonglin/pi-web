@@ -1,0 +1,45 @@
+name: Publish
+
+# Publishes by trusted publishing (OIDC): the runner exchanges its GitHub
+# identity for a short-lived npm credential, so no publish token is stored in
+# this repository or in the account.
+#
+# The trusted publisher configured on npmjs.com for this package names this
+# file. It allows `npm stage publish` only - not `npm publish` - so a run puts
+# the version in staging and a maintainer must approve it with 2FA (`npm stage
+# approve <stage-id>`, or the package page on npmjs.com) before it goes public.
+#
+# `repository.url` in package.json must keep matching this GitHub repository:
+# npm rejects the OIDC exchange otherwise.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # the OIDC token npm exchanges for a publish credential
+  contents: read
+
+jobs:
+  stage:
+    runs-on: ubuntu-latest
+    # `npm run build` (next build --webpack) is the slow step: the published
+    # package ships .next.
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - run: npm ci
+
+      # Tests are not run here on purpose: ci.yml already runs them on every
+      # push, and one of them asserts a wall-clock bound that a shared runner
+      # can miss, which would block a release.
+      - run: npm run build --if-present
+
+      - run: npm stage publish

@@ -25,6 +25,9 @@
   "bin": {
     "pwc": "bin/pi-web.js"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "bin",
     ".next",

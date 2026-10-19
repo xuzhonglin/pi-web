@@ -187,7 +187,7 @@ function createRunRecordTracker({ dir, record, parentProcess = process, warn = c
         runDir = typeof dir === "function" ? dir() : dir;
         writeRunRecord(runDir, record);
       } catch (error) {
-        warn(`[pi-web] could not write the run record (pi-web status/stop/open will not see this server): ${error.message}`);
+        warn(`[pi-web] could not write the run record (pi-webc status/stop/open will not see this server): ${error.message}`);
         return;
       }
       parentProcess.once("exit", () => removeRunRecord(runDir, record.pid));

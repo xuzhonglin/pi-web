@@ -1,15 +1,16 @@
 {
-  "name": "@agegr/pi-web",
+  "name": "@colinxu/pi-web",
   "version": "0.12.2",
   "description": "Web UI for the pi coding agent",
-  "homepage": "https://github.com/agegr/pi-web#readme",
+  "homepage": "https://github.com/xuzhonglin/pi-web#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/agegr/pi-web.git"
+    "url": "git+https://github.com/xuzhonglin/pi-web.git"
   },
   "bugs": {
-    "url": "https://github.com/agegr/pi-web/issues"
+    "url": "https://github.com/xuzhonglin/pi-web/issues"
   },
+  "author": "colinxu",
   "license": "MIT",
   "engines": {
     "node": ">=22.19.0"
@@ -22,7 +23,7 @@
     "ios_saf 16.2"
   ],
   "bin": {
-    "pi-web": "bin/pi-web.js"
+    "pi-webc": "bin/pi-web.js"
   },
   "files": [
     "bin",
@@ -45,7 +46,7 @@
     "test:terminal": "node e2e/terminal.mjs",
     "test:e2e": "node e2e/run.mjs",
     "test": "node --experimental-strip-types --test \"app/**/*.test.mjs\" \"components/**/*.test.mjs\" \"hooks/**/*.test.mjs\" \"lib/**/*.test.mjs\" \"public/**/*.test.mjs\"",
-    "release": "npm version patch --no-git-tag-version && npm run build && npm publish --access public"
+    "release": "npm version patch --no-git-tag-version && npm run build && npm publish --access public --registry=https://registry.npmjs.org/"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "1.2.0",

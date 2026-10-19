@@ -4,9 +4,11 @@
 
 Local browser UI for the [pi coding agent](https://github.com/earendil-works/pi). Pi Web uses the same local configuration and session files as pi, so you can browse and resume conversations, run agent turns, configure models and resources, and inspect project files from a browser.
 
+> **Fork notice.** This is `@colinxu/pi-web`, a fork of [agegr/pi-web](https://github.com/agegr/pi-web). The global command is `pi-webc`, so it can be installed alongside the original. MIT licensed; see [LICENSE](./LICENSE).
+
 **[Try the interactive demo →](https://agegr.github.io/pi-web/)** The real Pi Web UI runs entirely in your browser, with sample sessions, files and models. There is nothing to install; replies are pre-written and no model is called.
 
-![Pi Web displaying a pi session with structured Markdown, tool calls, and project navigation](https://raw.githubusercontent.com/agegr/pi-web/main/docs/screenshot2.png)
+![Pi Web displaying a pi session with structured Markdown, tool calls, and project navigation](https://raw.githubusercontent.com/xuzhonglin/pi-web/main/docs/screenshot2.png)
 
 ## Features
 
@@ -22,35 +24,35 @@ Local browser UI for the [pi coding agent](https://github.com/earendil-works/pi)
 Pi Web requires Node.js 22.19.0 or newer. Check your version with `node --version`, then run:
 
 ```bash
-npx @agegr/pi-web@latest
+npx @colinxu/pi-web@latest
 ```
 
 The CLI opens a browser after the server is ready. If it does not, open [http://127.0.0.1:30141](http://127.0.0.1:30141). Pi Web listens only on `127.0.0.1` by default.
 
 If no model provider is configured yet, open the **Models** panel to sign in or add an API key.
 
-To install the `pi-web` command globally:
+To install the `pi-webc` command globally:
 
 ```bash
-npm install -g @agegr/pi-web@latest
-pi-web
+npm install -g @colinxu/pi-web@latest
+pi-webc
 ```
 
 Commands:
 
 ```bash
-pi-web version          # print the installed version
-pi-web status           # list running servers
-pi-web stop [--port N]  # stop a running server
-pi-web open [--port N]  # open a running server in the browser
-pi-web update [--check] # update a global npm install
+pi-webc version          # print the installed version
+pi-webc status           # list running servers
+pi-webc stop [--port N]  # stop a running server
+pi-webc open [--port N]  # open a running server in the browser
+pi-webc update [--check] # update a global npm install
 ```
 
-To update, run `pi-web stop`, then `pi-web update` (or run the same install command again). To uninstall, run `npm uninstall -g @agegr/pi-web`.
+To update, run `pi-webc stop`, then `pi-webc update` (or run the same install command again). To uninstall, run `npm uninstall -g @colinxu/pi-web`.
 
 ## Configuration
 
-For port and hostname, command-line options override the corresponding environment variables. Either `--no-open` or `PI_WEB_NO_OPEN=1` disables automatic browser opening. Run `pi-web --help` (or `-h`) to print startup options and exit without starting the server. Unknown options exit with an error.
+For port and hostname, command-line options override the corresponding environment variables. Either `--no-open` or `PI_WEB_NO_OPEN=1` disables automatic browser opening. Run `pi-webc --help` (or `-h`) to print startup options and exit without starting the server. Unknown options exit with an error.
 
 | Option or environment variable | Purpose | Default |
 | --- | --- | --- |
@@ -65,13 +67,13 @@ For port and hostname, command-line options override the corresponding environme
 | `PI_WEB_IDLE_TIMEOUT_MS` | Session idle timeout in milliseconds, up to `2147483647`; `0` disables idle shutdown; invalid or out-of-range values use the default | `600000` (10 min) |
 | `PI_WEB_SHUTDOWN_DEADLINE_MS` | How long extensions get to handle `session_shutdown` before a closing session is disposed anyway, in milliseconds up to `2147483647`; `0`, invalid or out-of-range values use the default | `5000` (5 s) |
 
-Set `PI_WEB_APP_NAME` before starting the server (for example, `PI_WEB_APP_NAME='Work Pi' pi-web`). After changing it, restart the server to serve the new manifest; no rebuild is required. Updates to the name of an already installed PWA are managed by the browser and are not guaranteed to appear immediately. This does not change the page title or icons.
+Set `PI_WEB_APP_NAME` before starting the server (for example, `PI_WEB_APP_NAME='Work Pi' pi-webc`). After changing it, restart the server to serve the new manifest; no rebuild is required. Updates to the name of an already installed PWA are managed by the browser and are not guaranteed to appear immediately. This does not change the page title or icons.
 
 For example:
 
 ```bash
-pi-web --help
-pi-web -p 8080 -H 0.0.0.0 --no-open
+pi-webc --help
+pi-webc -p 8080 -H 0.0.0.0 --no-open
 ```
 
 ### Remote Access
@@ -79,7 +81,7 @@ pi-web -p 8080 -H 0.0.0.0 --no-open
 Binding to a non-loopback address exposes an agent that can execute high-privilege actions. On a trusted LAN, require a long random password:
 
 ```bash
-PI_WEB_PASSWORD='a-long-random-password' pi-web --hostname 0.0.0.0
+PI_WEB_PASSWORD='a-long-random-password' pi-webc --hostname 0.0.0.0
 ```
 
 Password authentication does not encrypt the connection. Do not expose Pi Web over plain HTTP to the internet; use HTTPS through a trusted reverse proxy or a trusted VPN. If a reverse proxy sends an external hostname, add that exact name to `PI_WEB_ALLOWED_HOSTS`. This allow-list does not change the address Pi Web binds to.
@@ -94,7 +96,7 @@ On macOS or Linux:
 HTTP_PROXY=http://127.0.0.1:7890 \
 HTTPS_PROXY=http://127.0.0.1:7890 \
 NO_PROXY=localhost,127.0.0.1 \
-npx @agegr/pi-web@latest
+npx @colinxu/pi-web@latest
 ```
 
 On Windows PowerShell:
@@ -103,7 +105,7 @@ On Windows PowerShell:
 $env:HTTP_PROXY = "http://127.0.0.1:7890"
 $env:HTTPS_PROXY = "http://127.0.0.1:7890"
 $env:NO_PROXY = "localhost,127.0.0.1"
-npx @agegr/pi-web@latest
+npx @colinxu/pi-web@latest
 ```
 
 ## Notes
@@ -148,7 +150,7 @@ Server-side Pi extensions with detached work can prevent automatic idle
 session eviction through the versioned global registry:
 
 ```js
-const liveness = globalThis[Symbol.for("@agegr/pi-web/session-liveness/v1")];
+const liveness = globalThis[Symbol.for("@colinxu/pi-web/session-liveness/v1")];
 const release = liveness?.version === 1
   ? liveness.register({
       name: "my-extension",

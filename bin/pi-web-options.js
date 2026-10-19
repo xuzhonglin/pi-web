@@ -30,7 +30,7 @@ function normalizePort(value) {
 }
 
 // Subcommands and their own options. Matched only as the first argument, so a
-// bare `pi-web [options]` still starts the server.
+// bare `pi-webc [options]` still starts the server.
 const COMMAND_OPTIONS = {
   version: {},
   status: {},
@@ -40,7 +40,7 @@ const COMMAND_OPTIONS = {
 };
 
 function getHelpText() {
-  return `Usage: pi-web [command] [options]
+  return `Usage: pi-webc [command] [options]
 
 Start the Pi Web UI server, or run one of the commands below.
 

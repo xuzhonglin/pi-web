@@ -6,7 +6,7 @@
 
 **[インタラクティブデモを試す →](https://agegr.github.io/pi-web/)**：実際の Pi Web UI がブラウザー内だけで動作し、サンプルのセッション、ファイル、モデルを確認できます。インストールは不要です。返信はあらかじめ用意された内容で、モデルは呼び出しません。
 
-![構造化された Markdown、ツール呼び出し、プロジェクトナビゲーションとともに pi セッションを表示する Pi Web](https://raw.githubusercontent.com/agegr/pi-web/main/docs/screenshot2.png)
+![構造化された Markdown、ツール呼び出し、プロジェクトナビゲーションとともに pi セッションを表示する Pi Web](https://raw.githubusercontent.com/xuzhonglin/pi-web/main/docs/screenshot2.png)
 
 ## 機能
 
@@ -22,35 +22,35 @@
 Pi Web には Node.js 22.19.0 以降が必要です。`node --version` でバージョンを確認してから、次を実行します：
 
 ```bash
-npx @agegr/pi-web@latest
+npx @colinxu/pi-web@latest
 ```
 
 サーバーの準備が整うと、CLI はブラウザーを自動的に開こうとします。開かない場合は [http://127.0.0.1:30141](http://127.0.0.1:30141) にアクセスしてください。Pi Web はデフォルトで `127.0.0.1` のみをリッスンします。
 
 モデル Provider が未設定の場合は、**Models** パネルを開いてログインするか API Key を追加してください。
 
-`pi-web` コマンドをグローバルにインストールする場合：
+`pi-webc` コマンドをグローバルにインストールする場合：
 
 ```bash
-npm install -g @agegr/pi-web@latest
-pi-web
+npm install -g @colinxu/pi-web@latest
+pi-webc
 ```
 
 コマンド：
 
 ```bash
-pi-web version          # インストール済みのバージョンを表示
-pi-web status           # 実行中のサーバーを一覧表示
-pi-web stop [--port N]  # 実行中のサーバーを停止
-pi-web open [--port N]  # 実行中のサーバーをブラウザーで開く
-pi-web update [--check] # グローバル npm インストールを更新
+pi-webc version          # インストール済みのバージョンを表示
+pi-webc status           # 実行中のサーバーを一覧表示
+pi-webc stop [--port N]  # 実行中のサーバーを停止
+pi-webc open [--port N]  # 実行中のサーバーをブラウザーで開く
+pi-webc update [--check] # グローバル npm インストールを更新
 ```
 
-更新時は `pi-web stop` を実行してから `pi-web update` を実行します（同じインストールコマンドの再実行でも構いません）。アンインストールするには `npm uninstall -g @agegr/pi-web` を実行します。
+更新時は `pi-webc stop` を実行してから `pi-webc update` を実行します（同じインストールコマンドの再実行でも構いません）。アンインストールするには `npm uninstall -g @colinxu/pi-web` を実行します。
 
 ## 設定
 
-ポートとホスト名では、コマンドラインオプションが対応する環境変数より優先されます。`--no-open` と `PI_WEB_NO_OPEN=1` は、どちらを指定してもブラウザーの自動起動が無効になります。`pi-web --help`（または `-h`）で起動オプションを表示して終了します。未知のオプションはエラーで終了します。
+ポートとホスト名では、コマンドラインオプションが対応する環境変数より優先されます。`--no-open` と `PI_WEB_NO_OPEN=1` は、どちらを指定してもブラウザーの自動起動が無効になります。`pi-webc --help`（または `-h`）で起動オプションを表示して終了します。未知のオプションはエラーで終了します。
 
 | オプションまたは環境変数 | 用途 | デフォルト |
 | --- | --- | --- |
@@ -64,8 +64,8 @@ pi-web update [--check] # グローバル npm インストールを更新
 例：
 
 ```bash
-pi-web --help
-pi-web -p 8080 -H 0.0.0.0 --no-open
+pi-webc --help
+pi-webc -p 8080 -H 0.0.0.0 --no-open
 ```
 
 ### リモートアクセス
@@ -73,7 +73,7 @@ pi-web -p 8080 -H 0.0.0.0 --no-open
 ループバック以外のアドレスにバインドすると、高い権限の操作を実行できるエージェントがネットワークに公開されます。信頼できる LAN で使用する場合も、十分に長いランダムなパスワードを設定してください：
 
 ```bash
-PI_WEB_PASSWORD='十分に長いランダムなパスワード' pi-web --hostname 0.0.0.0
+PI_WEB_PASSWORD='十分に長いランダムなパスワード' pi-webc --hostname 0.0.0.0
 ```
 
 パスワード認証は接続を暗号化しません。平文 HTTP で Pi Web をインターネットに公開せず、信頼できるリバースプロキシによる HTTPS または信頼できる VPN を使用してください。リバースプロキシが外部ホスト名を転送する場合は、その名前を完全一致で `PI_WEB_ALLOWED_HOSTS` に追加します。この許可リストは Pi Web のバインド先を変更しません。
@@ -88,7 +88,7 @@ macOS または Linux：
 HTTP_PROXY=http://127.0.0.1:7890 \
 HTTPS_PROXY=http://127.0.0.1:7890 \
 NO_PROXY=localhost,127.0.0.1 \
-npx @agegr/pi-web@latest
+npx @colinxu/pi-web@latest
 ```
 
 Windows PowerShell：
@@ -97,7 +97,7 @@ Windows PowerShell：
 $env:HTTP_PROXY = "http://127.0.0.1:7890"
 $env:HTTPS_PROXY = "http://127.0.0.1:7890"
 $env:NO_PROXY = "localhost,127.0.0.1"
-npx @agegr/pi-web@latest
+npx @colinxu/pi-web@latest
 ```
 
 ## 注意事項

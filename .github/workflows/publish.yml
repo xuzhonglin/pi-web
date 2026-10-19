@@ -47,4 +47,13 @@ jobs:
       # OIDC at all.
       - run: node --version && npm --version
 
-      - run: npm stage publish
+      - name: Stage on npm
+        run: |
+          # The job log needs admin rights to download, but annotations are
+          # public, so a failure is echoed there to stay diagnosable.
+          if ! out=$(npm stage publish 2>&1); then
+            printf '%s\n' "$out"
+            echo "::error title=npm stage publish failed::$(printf '%s' "$out" | tr '\n' ' ' | tail -c 900)"
+            exit 1
+          fi
+          printf '%s\n' "$out"

@@ -34,6 +34,7 @@
     "!.next/cache",
     "!.next/dev",
     "!.next/**/*.js.map",
+    "!.next/server/app/**/*.nft.json",
     "public",
     "next.config.ts",
     "package.json"

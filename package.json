@@ -1,5 +1,5 @@
 {
-  "name": "@colinxu/pi-web",
+  "name": "@colinxu/pi-web-classic",
   "version": "0.12.2",
   "description": "Web UI for the pi coding agent",
   "homepage": "https://github.com/xuzhonglin/pi-web#readme",
@@ -23,7 +23,7 @@
     "ios_saf 16.2"
   ],
   "bin": {
-    "pi-webc": "bin/pi-web.js"
+    "pwc": "bin/pi-web.js"
   },
   "files": [
     "bin",

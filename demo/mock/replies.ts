@@ -21,7 +21,7 @@ export interface ReplyPlan {
   };
 }
 
-const INSTALL = "npx @colinxu/pi-web@latest";
+const INSTALL = "npx @colinxu/pi-web-classic@latest";
 
 function modelName(session: MockSession): string {
   const model = session.live?.model;

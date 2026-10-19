@@ -24,35 +24,35 @@
 Pi Web 要求 Node.js 22.19.0 或更高版本。先用 `node --version` 检查版本，然后运行：
 
 ```bash
-npx @colinxu/pi-web@latest
+npx @colinxu/pi-web-classic@latest
 ```
 
 服务就绪后，命令行会尝试自动打开浏览器。如果没有打开，请访问 [http://127.0.0.1:30141](http://127.0.0.1:30141)。Pi Web 默认仅监听 `127.0.0.1`。
 
 如果尚未配置模型 Provider，请打开**模型（Models）**面板登录或添加 API Key。
 
-如需全局安装 `pi-webc` 命令：
+如需全局安装 `pwc` 命令：
 
 ```bash
-npm install -g @colinxu/pi-web@latest
-pi-webc
+npm install -g @colinxu/pi-web-classic@latest
+pwc
 ```
 
 命令：
 
 ```bash
-pi-webc version          # 打印已安装的版本
-pi-webc status           # 列出正在运行的服务
-pi-webc stop [--port N]  # 停止正在运行的服务
-pi-webc open [--port N]  # 在浏览器中打开正在运行的服务
-pi-webc update [--check] # 更新全局 npm 安装
+pwc version          # 打印已安装的版本
+pwc status           # 列出正在运行的服务
+pwc stop [--port N]  # 停止正在运行的服务
+pwc open [--port N]  # 在浏览器中打开正在运行的服务
+pwc update [--check] # 更新全局 npm 安装
 ```
 
-更新时先运行 `pi-webc stop`，再运行 `pi-webc update`（也可以再次执行同一条安装命令）。卸载时运行 `npm uninstall -g @colinxu/pi-web`。
+更新时先运行 `pwc stop`，再运行 `pwc update`（也可以再次执行同一条安装命令）。卸载时运行 `npm uninstall -g @colinxu/pi-web-classic`。
 
 ## 配置
 
-端口和主机名以命令行参数为准，优先于对应的环境变量。`--no-open` 与 `PI_WEB_NO_OPEN=1` 中任意一个都会关闭自动打开浏览器。运行 `pi-webc --help`（或 `-h`）可打印启动选项并以退出码 0 结束，不会启动服务；未知参数会报错并以退出码 1 结束。
+端口和主机名以命令行参数为准，优先于对应的环境变量。`--no-open` 与 `PI_WEB_NO_OPEN=1` 中任意一个都会关闭自动打开浏览器。运行 `pwc --help`（或 `-h`）可打印启动选项并以退出码 0 结束，不会启动服务；未知参数会报错并以退出码 1 结束。
 
 | 参数或环境变量 | 用途 | 默认值 |
 | --- | --- | --- |
@@ -64,13 +64,13 @@ pi-webc update [--check] # 更新全局 npm 安装
 | `PI_WEB_ALLOWED_HOSTS` | 额外允许的代理或自定义主机名，多个值用逗号分隔，必须精确匹配 | 未设置 |
 | `PI_WEB_PASSWORD` | 启用浏览器密码登录；API 客户端可使用用户名为 `pi` 的 Basic Auth | 不启用认证 |
 
-在启动服务前设置 `PI_WEB_APP_NAME`，例如 `PI_WEB_APP_NAME='工作 Pi' pi-webc`。修改后重启服务即可提供新的 manifest，无需重新构建。已安装 PWA 的名称更新由浏览器管理，不保证立即生效；此设置不改变页面标题或图标。
+在启动服务前设置 `PI_WEB_APP_NAME`，例如 `PI_WEB_APP_NAME='工作 Pi' pwc`。修改后重启服务即可提供新的 manifest，无需重新构建。已安装 PWA 的名称更新由浏览器管理，不保证立即生效；此设置不改变页面标题或图标。
 
 例如：
 
 ```bash
-pi-webc --help
-pi-webc -p 8080 -H 0.0.0.0 --no-open
+pwc --help
+pwc -p 8080 -H 0.0.0.0 --no-open
 ```
 
 ### 远程访问
@@ -78,7 +78,7 @@ pi-webc -p 8080 -H 0.0.0.0 --no-open
 监听非回环地址会暴露一个可执行高权限操作的智能体。在可信局域网中使用时，请设置足够长的随机密码：
 
 ```bash
-PI_WEB_PASSWORD='足够长的随机密码' pi-webc --hostname 0.0.0.0
+PI_WEB_PASSWORD='足够长的随机密码' pwc --hostname 0.0.0.0
 ```
 
 密码认证不会加密连接。不要通过明文 HTTP 将 Pi Web 暴露到互联网；远程访问应使用可信反向代理提供 HTTPS，或通过可信 VPN。如果反向代理传递外部主机名，请把该名称精确加入 `PI_WEB_ALLOWED_HOSTS`。这个白名单不会改变 Pi Web 的监听地址。
@@ -93,7 +93,7 @@ macOS 或 Linux：
 HTTP_PROXY=http://127.0.0.1:7890 \
 HTTPS_PROXY=http://127.0.0.1:7890 \
 NO_PROXY=localhost,127.0.0.1 \
-npx @colinxu/pi-web@latest
+npx @colinxu/pi-web-classic@latest
 ```
 
 Windows PowerShell：
@@ -102,7 +102,7 @@ Windows PowerShell：
 $env:HTTP_PROXY = "http://127.0.0.1:7890"
 $env:HTTPS_PROXY = "http://127.0.0.1:7890"
 $env:NO_PROXY = "localhost,127.0.0.1"
-npx @colinxu/pi-web@latest
+npx @colinxu/pi-web-classic@latest
 ```
 
 ## 注意事项

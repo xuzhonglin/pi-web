@@ -27,9 +27,9 @@ jobs:
     # package ships .next.
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
@@ -41,5 +41,10 @@ jobs:
       # push, and one of them asserts a wall-clock bound that a shared runner
       # can miss, which would block a release.
       - run: npm run build --if-present
+
+      # Prints the CLI that will talk to the registry: trusted publishing needs
+      # npm >= 11.5.1, and a failing stage is often a version too old to speak
+      # OIDC at all.
+      - run: node --version && npm --version
 
       - run: npm stage publish
